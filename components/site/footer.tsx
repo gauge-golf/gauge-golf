@@ -29,7 +29,7 @@ export function Footer() {
   return (
     <footer className="border-t border-white/10 px-0 pb-10 pt-16">
       <div className="mx-auto max-w-[1320px] px-6 md:px-10">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-[1.4fr_1fr_1fr] md:gap-14">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-[1.4fr_1fr_1fr_1fr] md:gap-14">
           <div>
             <Image
               src="/media/logo-main-gauge.svg"
@@ -79,10 +79,25 @@ export function Footer() {
               <li><a href="#" className="font-display text-sm font-semibold hover:text-gold">/gaugegolf · YouTube</a></li>
             </ul>
           </div>
+
+          <div>
+            <h5 className="m-0 mb-3.5 font-mono text-[10px] uppercase tracking-[0.22em] text-white/40">Legal</h5>
+            <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
+              {[
+                ["/privacy", "Privacy Policy"],
+                ["/terms", "Terms of Sale"],
+                ["/shipping", "Shipping & Delivery"],
+                ["/refunds", "Refunds & Returns"],
+                ["/imprint", "About this site"],
+              ].map(([h, l]) => (
+                <li key={h}><a href={h} className="font-display text-sm font-semibold hover:text-gold">{l}</a></li>
+              ))}
+            </ul>
+          </div>
         </div>
 
         <div className="mt-14 flex flex-wrap justify-between gap-3 border-t border-white/10 pt-6 font-mono text-[11px] uppercase tracking-[0.16em] text-white/40">
-          <span>© Gauge Golf · Independent founder-led project</span>
+          <span>© Gauge Golf · Operated by Konstantin Kazarichuk · Independent seller</span>
           <a href="mailto:hello@gauge-golf.com" className="hover:text-gold">hello@gauge-golf.com</a>
         </div>
       </div>
