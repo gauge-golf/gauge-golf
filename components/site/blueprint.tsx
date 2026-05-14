@@ -53,7 +53,7 @@ export function Blueprint() {
                 <div className="absolute inset-0 rounded-[30%_30%_24%_24%/18%_18%_12%_12%] border border-dashed border-white/20 bg-white/[0.02]" />
                 <div
                   aria-hidden
-                  className="absolute inset-0 bg-[url('/media/glove.png')] bg-contain bg-center bg-no-repeat"
+                  className="absolute inset-0 bg-[url('/media/design_palm.png')] bg-contain bg-center bg-no-repeat opacity-90"
                 />
                 {tags.map((t) => (
                   <div

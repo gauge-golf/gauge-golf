@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Youtube, Instagram, Mail } from "lucide-react";
 
 // TikTok + X (formerly Twitter) inline (lucide TikTok deprecated)
@@ -30,9 +31,13 @@ export function Footer() {
       <div className="mx-auto max-w-[1320px] px-6 md:px-10">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-[1.4fr_1fr_1fr] md:gap-14">
           <div>
-            <div className="m-0 mb-4 font-display text-[clamp(64px,12vw,168px)] font-black leading-[0.85] tracking-[-0.02em]">
-              GAUGE.
-            </div>
+            <Image
+              src="/media/logo-main-gauge.svg"
+              alt="Gauge Golf"
+              width={280}
+              height={80}
+              className="mb-5 h-auto w-[200px] md:w-[280px]"
+            />
             <p className="max-w-[36ch] text-white/60">
               Universal performance golf glove.<br />Built in public.
             </p>

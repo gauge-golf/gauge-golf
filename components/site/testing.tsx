@@ -1,15 +1,34 @@
-import { Play } from "lucide-react";
 import { SectionHead } from "./section-head";
+import { LiteYouTube } from "./lite-youtube";
 
-// Each tile auto-renders /public/media/testing-0X.mp4 (or .jpg) when present.
-// See public/media/README.md for filenames and specs.
-const tiles = [
-  { label: "Range Testing",    src: "/media/testing-01.mp4" },
-  { label: "Grip Testing",     src: "/media/testing-02.mp4" },
-  { label: "Sweat Conditions", src: "/media/testing-03.mp4" },
-  { label: "Factory Visit",    src: "/media/testing-04.mp4" },
-  { label: "Golfer Reactions", src: "/media/testing-05.mp4" },
-  { label: "Product Closeup",  src: "/media/testing-06.mp4" },
+type Tile =
+  | {
+      kind: "video";
+      label: string;
+      day: number;
+      location: string;
+      youtubeId: string;
+    }
+  | {
+      kind: "soon";
+      label: string;
+      hint: string;
+    };
+
+// Season 1 — 9 published Shorts + 3 upcoming. Add new ones at the end.
+const tiles: Tile[] = [
+  { kind: "video", label: "The Idea",            day: 1,  location: "Bali",       youtubeId: "WVyQSwEwuIc" },
+  { kind: "video", label: "MVP · Elastic Band",  day: 8,  location: "Range",      youtubeId: "EniF9cZfPcs" },
+  { kind: "video", label: "Real Course",         day: 9,  location: "On Course",  youtubeId: "QHxSvcpWl_o" },
+  { kind: "video", label: "Wedge Practice",      day: 15, location: "Range",      youtubeId: "IFe9rSKUVsw" },
+  { kind: "video", label: "Sweat Problem",       day: 21, location: "+30°C",      youtubeId: "n3wvTMAaLq8" },
+  { kind: "video", label: "PGA Academy",         day: 22, location: "PGA",        youtubeId: "rxMDiEfzUqY" },
+  { kind: "video", label: "Arrived in China",    day: 32, location: "China",      youtubeId: "5rsgDNElkIo" },
+  { kind: "video", label: "To the Factory",      day: 36, location: "Guangzhou",  youtubeId: "coDPuHp1z5U" },
+  { kind: "video", label: "Material Selection",  day: 42, location: "Factory",    youtubeId: "gPjv741sCns" },
+  { kind: "soon",  label: "First Sample",        hint: "Coming soon" },
+  { kind: "soon",  label: "Field Testing",       hint: "Coming soon" },
+  { kind: "soon",  label: "Production",          hint: "Coming soon" },
 ];
 
 export function Testing() {
@@ -22,33 +41,69 @@ export function Testing() {
           lede="Driving ranges, factory floors, sweat and weather — the videos speak for themselves."
         />
 
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
-          {tiles.map((t) => (
-            <figure
-              key={t.label}
-              className="group relative aspect-[9/14] overflow-hidden rounded-[10px] border border-white/10 bg-[repeating-linear-gradient(135deg,rgba(255,255,255,.03)_0_2px,transparent_2px_12px),linear-gradient(180deg,#0f2230,#0a1a25)] md:aspect-[4/5]"
-            >
-              <video
-                className="absolute inset-0 size-full object-cover"
-                src={t.src}
-                muted
-                loop
-                playsInline
-                preload="none"
-              />
-              <div className="pointer-events-none absolute inset-0 grid place-items-center opacity-70 transition group-hover:opacity-100">
-                <div className="grid size-12 place-items-center rounded-full border border-white/30 bg-white/10 backdrop-blur">
-                  <Play className="size-4 fill-white" strokeWidth={0} />
-                </div>
-              </div>
-              <figcaption className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 p-3 font-mono text-[10px] uppercase tracking-[0.2em] text-white/70">
-                <span>{t.label}</span>
-                <span className="text-white/40">GAUGE</span>
-              </figcaption>
-            </figure>
-          ))}
+        <div className="mb-5 flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-white/50">
+          <span className="size-1.5 rounded-full bg-gold" />
+          <span>Season 1 — Building from scratch</span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 lg:gap-4">
+          {tiles.map((t, i) =>
+            t.kind === "video" ? (
+              <VideoCard key={t.youtubeId} {...t} />
+            ) : (
+              <SoonCard key={`soon-${i}`} {...t} />
+            )
+          )}
         </div>
       </div>
     </section>
+  );
+}
+
+function VideoCard({
+  label,
+  day,
+  location,
+  youtubeId,
+}: Extract<Tile, { kind: "video" }>) {
+  return (
+    <figure className="group relative aspect-[9/14] overflow-hidden rounded-[10px] border border-white/10 bg-black">
+      <LiteYouTube id={youtubeId} title={`Day ${day} — ${label}`} />
+
+      {/* Top-right: Day chip */}
+      <div className="pointer-events-none absolute right-2.5 top-2.5 rounded border border-gold/50 bg-black/60 px-1.5 py-1 font-mono text-[9px] uppercase tracking-[0.18em] text-gold backdrop-blur">
+        Day {day}
+      </div>
+
+      {/* Bottom: label + location */}
+      <figcaption className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-2.5">
+        <div className="min-w-0">
+          <div className="truncate font-display text-[13px] font-bold leading-tight">
+            {label}
+          </div>
+          <div className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.18em] text-white/60">
+            {location} · Day {day}
+          </div>
+        </div>
+      </figcaption>
+    </figure>
+  );
+}
+
+function SoonCard({ label, hint }: Extract<Tile, { kind: "soon" }>) {
+  return (
+    <figure className="relative aspect-[9/14] overflow-hidden rounded-[10px] border border-dashed border-white/15 bg-[repeating-linear-gradient(135deg,rgba(255,255,255,.025)_0_2px,transparent_2px_12px),linear-gradient(180deg,#0c1c28,#06121b)]">
+      <div className="absolute inset-0 grid place-items-center p-4 text-center">
+        <div>
+          <div className="mx-auto mb-3 grid size-10 place-items-center rounded-full border border-white/20 bg-black/40">
+            <span className="size-1.5 animate-pulse-gold rounded-full bg-gold" />
+          </div>
+          <div className="font-display text-[13px] font-bold leading-tight">{label}</div>
+          <div className="mt-1 font-mono text-[9px] uppercase tracking-[0.2em] text-white/40">
+            {hint}
+          </div>
+        </div>
+      </div>
+    </figure>
   );
 }

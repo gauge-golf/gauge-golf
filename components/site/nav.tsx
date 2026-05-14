@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { GaugeMark } from "./logo";
+import Image from "next/image";
 
 const links = [
   { href: "#story", label: "Story" },
@@ -13,7 +13,14 @@ export function Nav() {
     <header className="fixed inset-x-0 top-0 z-50 bg-gradient-to-b from-ink/90 via-ink/60 to-transparent backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-[1320px] items-center justify-between px-6 md:px-10">
         <Link href="#top" aria-label="Gauge Golf home" className="flex items-center gap-2.5">
-          <GaugeMark className="h-5 w-auto" />
+          <Image
+            src="/media/GAUGE-LOGO.svg"
+            alt="Gauge Golf"
+            width={24}
+            height={24}
+            priority
+            className="h-6 w-auto"
+          />
           <span className="font-display text-sm font-extrabold tracking-[0.18em]">GAUGE</span>
         </Link>
 
