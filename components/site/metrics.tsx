@@ -10,6 +10,7 @@ export function Metrics({ locale = "en" }: { locale?: Locale }) {
         <SectionHead
           num={t.num}
           title={<>{t.title_line1}<br />{t.title_line2}</>}
+          subtitle={t.subtitle || undefined}
           lede={t.lede}
         />
 

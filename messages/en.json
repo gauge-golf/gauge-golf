@@ -71,6 +71,7 @@
     "num": "03 — The Product",
     "title_line1": "Built for",
     "title_line2": "repetition.",
+    "subtitle": "",
     "lede": "A universal performance golf glove designed for grip, wrist stability and repetitive practice in heat, rain and all-weather training.",
     "feats": [
       { "h": "Wrist Stability", "p": "Additional support designed for repetitive swing sessions." },
@@ -84,6 +85,7 @@
     "num": "04 — The Founder",
     "title_line1": "Built",
     "title_line2": "independently.",
+    "subtitle": "",
     "lede": "One golfer, building a better glove for high-volume practice — and sharing the process openly.",
     "caption": "Konstantin · Founder",
     "p1_pre": "I'm a handicap-16 golfer who spends most of his time ",
@@ -99,6 +101,7 @@
     "num": "05 — At a Glance",
     "title_line1": "What Gauge",
     "title_line2": "stands for.",
+    "subtitle": "",
     "lede": "A simple, focused product — built for repetition, weather and the player who actually practices.",
     "items": [
       { "v": "400", "d": "Swings Per Session" },

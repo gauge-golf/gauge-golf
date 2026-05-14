@@ -1,10 +1,12 @@
 export function SectionHead({
   num,
   title,
+  subtitle,
   lede,
 }: {
   num: string;
   title: React.ReactNode;
+  subtitle?: React.ReactNode;
   lede: React.ReactNode;
 }) {
   return (
@@ -13,7 +15,12 @@ export function SectionHead({
       <h2 className="font-display text-[clamp(34px,5vw,64px)] font-extrabold uppercase leading-[0.92] tracking-[-0.02em]">
         {title}
       </h2>
-      <p className="max-w-[36ch] text-left text-[15px] text-white/60 md:text-right">{lede}</p>
+      <div className="flex max-w-[36ch] flex-col gap-2 text-left md:items-end md:text-right">
+        {subtitle ? (
+          <div className="font-display text-[15px] font-semibold text-white/85">{subtitle}</div>
+        ) : null}
+        <p className="m-0 text-[15px] text-white/60">{lede}</p>
+      </div>
     </div>
   );
 }
