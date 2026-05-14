@@ -17,12 +17,15 @@ export function Metrics({ locale = "en" }: { locale?: Locale }) {
         <div className="grid grid-cols-2 overflow-hidden rounded-[18px] border border-white/10 md:grid-cols-4">
           {items.map((m, i) => (
             <div
-              key={m.d}
+              key={`${m.v}-${i}`}
               className={`flex flex-col gap-3 p-7 ${i % 2 === 0 ? "border-r border-white/10" : ""} ${i < 2 ? "border-b border-white/10 md:border-b-0" : ""} md:border-r md:border-white/10 md:last:border-r-0 md:[&:nth-child(2)]:border-r md:[&:nth-child(4)]:border-r-0`}
             >
               <span className="font-display text-[clamp(32px,4.4vw,56px)] font-black leading-[0.95] tracking-[-0.02em]">
                 {m.v}
               </span>
+              {m.label ? (
+                <span className="font-display text-sm font-semibold text-white/85">{m.label}</span>
+              ) : null}
               <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-white/60">{m.d}</span>
             </div>
           ))}

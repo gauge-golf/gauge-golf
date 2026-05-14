@@ -104,10 +104,10 @@
     "subtitle": "",
     "lede": "A simple, focused product — built for repetition, weather and the player who actually practices.",
     "items": [
-      { "v": "400", "d": "Swings Per Session" },
-      { "v": "All-Weather", "d": "Heat · Rain · Humidity" },
-      { "v": "Founder-Led", "d": "Independent Product Build" },
-      { "v": "One Product", "d": "Built Right First" }
+      { "v": "400",         "label": "", "d": "Swings Per Session" },
+      { "v": "All-Weather", "label": "", "d": "Heat · Rain · Humidity" },
+      { "v": "Founder-Led", "label": "", "d": "Independent Product Build" },
+      { "v": "One Product", "label": "", "d": "Built Right First" }
     ]
   },
   "reserve": {
