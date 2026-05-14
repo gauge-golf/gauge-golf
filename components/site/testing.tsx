@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { SectionHead } from "./section-head";
 import { LiteYouTube } from "./lite-youtube";
 
@@ -98,10 +99,13 @@ function SoonCard({ label, hint, poster }: Extract<Tile, { kind: "soon" }>) {
     // Preview tile: real cover image + Coming-X chip overlay
     return (
       <figure className="relative aspect-[9/16] overflow-hidden rounded-[10px] border border-gold/40 bg-black">
-        <div
-          aria-hidden
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${poster})` }}
+        <Image
+          src={poster}
+          alt={label}
+          fill
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          quality={70}
+          className="object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
 

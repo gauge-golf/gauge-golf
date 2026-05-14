@@ -16,16 +16,37 @@ const mono = JetBrains_Mono({
   display: "swap",
 });
 
+const SITE_URL = "https://gauge-golf.com";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "Gauge Golf — One Glove. Every Condition.",
   description:
-    "A universal performance golf glove designed for grip, wrist stability and long practice sessions.",
+    "A universal performance golf glove designed for grip, wrist stability and long practice sessions in heat, rain and all-weather training.",
+  keywords: [
+    "golf glove",
+    "performance golf glove",
+    "all-weather golf glove",
+    "driving range glove",
+    "wrist stability glove",
+    "Gauge Golf",
+  ],
+  alternates: { canonical: "/" },
   openGraph: {
     title: "Gauge Golf — One Glove. Every Condition.",
     description: "Universal performance golf glove. Built in public.",
     type: "website",
+    url: SITE_URL,
+    siteName: "Gauge Golf",
+    images: [{ url: "/og.jpg", width: 1200, height: 630, alt: "Gauge Golf" }],
   },
-  twitter: { card: "summary_large_image" },
+  twitter: {
+    card: "summary_large_image",
+    title: "Gauge Golf — One Glove. Every Condition.",
+    description: "Universal performance golf glove. Built in public.",
+    images: ["/og.jpg"],
+  },
+  robots: { index: true, follow: true },
 };
 
 export const viewport: Viewport = {
@@ -35,10 +56,33 @@ export const viewport: Viewport = {
   themeColor: "#000F19",
 };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Gauge Golf",
+  url: SITE_URL,
+  logo: `${SITE_URL}/media/logo-main-gauge.svg`,
+  email: "hello@gauge-golf.com",
+  founder: { "@type": "Person", name: "Konstantin Kazarichuk" },
+  description:
+    "Universal performance golf glove for repetitive practice in heat, rain and all-weather training.",
+  sameAs: [
+    "https://www.instagram.com/gaugegolf",
+    "https://www.youtube.com/@gaugegolf",
+    "https://www.tiktok.com/@gaugegolf",
+  ],
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${saira.variable} ${mono.variable}`}>
-      <body>{children}</body>
+      <body>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        {children}
+      </body>
     </html>
   );
 }

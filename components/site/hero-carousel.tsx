@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 // Drop your 4:5 photos here. Order = display order. Carousel auto-adapts to count.
@@ -41,13 +42,18 @@ export function HeroCarousel() {
           key={src}
           aria-hidden={idx !== i}
           className="absolute inset-0 transition-opacity duration-[900ms] ease-out"
-          style={{
-            backgroundImage: `url(${src})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            opacity: idx === i ? 1 : 0,
-          }}
-        />
+          style={{ opacity: idx === i ? 1 : 0 }}
+        >
+          <Image
+            src={src}
+            alt=""
+            fill
+            sizes="(max-width: 1024px) 100vw, 50vw"
+            priority={idx === 0}
+            quality={75}
+            className="object-cover"
+          />
+        </div>
       ))}
 
       {/* Dots — only shown when there are multiple slides */}

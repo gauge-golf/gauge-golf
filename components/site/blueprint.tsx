@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { SectionHead } from "./section-head";
 
 const feats = [
@@ -21,9 +22,13 @@ export function Blueprint() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:gap-12">
           {/* Product image — 4:5, matches Hero / Founder slots. No text overlays (labels are on the image itself). */}
           <div className="relative aspect-[4/5] overflow-hidden rounded-[18px] border border-white/20 bg-[linear-gradient(180deg,#0B2230,#061722)]">
-            <div
-              aria-hidden
-              className="absolute inset-0 bg-[url('/media/mvp-gauge.png')] bg-cover bg-center"
+            <Image
+              src="/media/mvp-gauge.png"
+              alt="Gauge Golf glove — wrist stability, grip pattern, microfiber construction"
+              fill
+              sizes="(max-width: 1024px) 100vw, 55vw"
+              quality={75}
+              className="object-cover"
             />
 
             {/* Corner brackets — decorative, in corners only */}
