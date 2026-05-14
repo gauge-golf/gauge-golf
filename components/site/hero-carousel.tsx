@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 const slides = [
   "/media/gauge-korea.png",
   "/media/gauge-hero-2.png",
-  // "/media/hero-03.jpg",
+  "/media/gauge-design-glove.png",
   // "/media/hero-04.jpg",
   // "/media/hero-05.jpg",
 ];
