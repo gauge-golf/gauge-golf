@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from "react";
 
-// Drop your 4:5 photos at these paths (1080×1350 minimum, JPEG ~85%).
-// See /public/media/README.md for the full brief.
+// Drop your 4:5 photos here. Order = display order. Carousel auto-adapts to count.
+// See /public/media/README.md for photographer brief.
 const slides = [
-  "/media/hero-01.jpg",
-  "/media/hero-02.jpg",
-  "/media/hero-03.jpg",
-  "/media/hero-04.jpg",
-  "/media/hero-05.jpg",
+  "/media/gauge-korea.png",
+  // "/media/hero-02.jpg",
+  // "/media/hero-03.jpg",
+  // "/media/hero-04.jpg",
+  // "/media/hero-05.jpg",
 ];
 
 const INTERVAL_MS = 4500;
@@ -19,7 +19,7 @@ export function HeroCarousel() {
   const [paused, setPaused] = useState(false);
 
   useEffect(() => {
-    if (paused) return;
+    if (paused || slides.length < 2) return;
     const reduce =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -50,9 +50,9 @@ export function HeroCarousel() {
         />
       ))}
 
-      {/* Dots — bottom-left, minimal. No text overlay on the photo subject. */}
+      {/* Dots — only shown when there are multiple slides */}
       <div className="absolute bottom-3.5 left-3.5 flex gap-1.5">
-        {slides.map((_, idx) => (
+        {slides.length > 1 && slides.map((_, idx) => (
           <button
             key={idx}
             type="button"
