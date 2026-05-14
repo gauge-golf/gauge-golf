@@ -101,13 +101,13 @@ function VideoCard({
     <figure className="group relative aspect-[9/16] overflow-hidden rounded-[10px] border border-white/10 bg-black">
       <LiteYouTube id={youtubeId} title={`${dayWord} ${day} — ${label}`} posterOverride={poster} />
 
-      {/* Top-right: Day chip */}
-      <div className="pointer-events-none absolute right-2.5 top-2.5 rounded border border-gold/50 bg-black/60 px-1.5 py-1 font-mono text-[9px] uppercase tracking-[0.18em] text-gold backdrop-blur">
+      {/* Top-right: Day chip — hidden once video is playing so YouTube's fullscreen button is reachable. */}
+      <div className="pointer-events-none absolute right-2.5 top-2.5 rounded border border-gold/50 bg-black/60 px-1.5 py-1 font-mono text-[9px] uppercase tracking-[0.18em] text-gold backdrop-blur group-has-[iframe]:hidden">
         {dayWord} {day}
       </div>
 
-      {/* Bottom: label + location */}
-      <figcaption className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-2.5">
+      {/* Bottom: label + location — hidden once video is playing (covers YouTube controls otherwise). */}
+      <figcaption className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-2.5 group-has-[iframe]:hidden">
         <div className="min-w-0">
           <div className="truncate font-display text-[13px] font-bold leading-tight">
             {label}
