@@ -58,9 +58,17 @@ export function Hero() {
           </div>
         </div>
 
-        {/* RIGHT — media placeholder */}
+        {/* RIGHT — media slot. Drop a file at /public/media/hero.mp4 (and /media/hero.jpg as poster) to fill it. */}
         <div className="relative min-h-[420px] overflow-hidden rounded-[18px] border border-white/20 bg-[radial-gradient(120%_90%_at_60%_30%,rgba(241,192,78,0.10),transparent_60%),linear-gradient(180deg,#0B2230,#061722)] lg:min-h-0 [aspect-ratio:4/5] lg:[aspect-ratio:auto]">
           <div className="absolute inset-0 bg-[repeating-linear-gradient(135deg,rgba(255,255,255,.03)_0_2px,transparent_2px_10px),radial-gradient(80%_60%_at_50%_40%,rgba(255,255,255,.05),transparent_70%)]" />
+
+          <video
+            className="absolute inset-0 size-full object-cover"
+            src="/media/hero.mp4"
+            poster="/media/hero.jpg"
+            autoPlay muted loop playsInline preload="metadata"
+          />
+
           {[
             ["tl", "top-3 left-3 border-r-0 border-b-0"],
             ["tr", "top-3 right-3 border-l-0 border-b-0"],
@@ -70,18 +78,11 @@ export function Hero() {
             <span key={k} className={`absolute size-3.5 border border-white/40 ${c}`} />
           ))}
 
-          <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-4.5">
-            <div className="flex items-center justify-between gap-3">
-              <span className="rounded border border-white/20 bg-black/40 px-2 py-1.5 font-mono text-[10px] uppercase tracking-[0.22em]">REC · FIELD TEST</span>
-              <span className="rounded border border-gold/50 bg-black/40 px-2 py-1.5 font-mono text-[10px] uppercase tracking-[0.22em] text-gold">
-                GAUGE · 한국 · 中国
-              </span>
-            </div>
-            <div>
-              <div className="font-display text-[clamp(48px,8vw,96px)] font-black uppercase leading-[0.9] tracking-[-0.02em]">
-                One Glove.<br /><span className="text-gold">Every Condition.</span>
-              </div>
-            </div>
+          <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between gap-3 p-4.5">
+            <span className="rounded border border-white/20 bg-black/40 px-2 py-1.5 font-mono text-[10px] uppercase tracking-[0.22em] backdrop-blur">REC · FIELD TEST</span>
+            <span className="rounded border border-gold/50 bg-black/40 px-2 py-1.5 font-mono text-[10px] uppercase tracking-[0.22em] text-gold backdrop-blur">
+              GAUGE · 한국 · 中国
+            </span>
           </div>
         </div>
       </div>

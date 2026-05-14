@@ -11,10 +11,14 @@ export function Founder() {
         />
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14">
-          {/* Media placeholder */}
+          {/* Founder photo slot — drop /public/media/founder.jpg to fill it. */}
           <div className="relative aspect-[4/5] overflow-hidden rounded-[18px] border border-white/10 bg-[repeating-linear-gradient(135deg,rgba(255,255,255,.03)_0_2px,transparent_2px_10px),linear-gradient(180deg,#0B2230,#061722)]">
-            <div className="pointer-events-none absolute inset-0 flex flex-col justify-end p-4.5">
-              <div className="font-mono text-[10px] uppercase tracking-[0.24em] text-white/60">Konstantin · Founder</div>
+            <div
+              aria-hidden
+              className="absolute inset-0 bg-[url('/media/founder.jpg')] bg-cover bg-center"
+            />
+            <div className="pointer-events-none absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/60 via-transparent to-transparent p-4.5">
+              <div className="font-mono text-[10px] uppercase tracking-[0.24em] text-white/80">Konstantin · Founder</div>
             </div>
           </div>
 

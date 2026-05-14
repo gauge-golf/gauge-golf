@@ -42,21 +42,47 @@ export function Reserve() {
             <form action={formAction} className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
               <Field name="name" label="Name" placeholder="First and last" required autoComplete="name" />
               <Field name="email" label="Email" type="email" placeholder="you@email.com" required autoComplete="email" inputMode="email" />
-              <Field name="country" label="Country" placeholder="Where we'd ship" required autoComplete="country-name" />
-              <Field name="social" label="Instagram / X" optional placeholder="@handle" autoComplete="username" />
-              <Field name="handicap" label="Handicap" optional placeholder="e.g. 16 · or scratch" inputMode="text" />
-              <div className="flex flex-col gap-1.5 md:col-span-2">
-                <label htmlFor="f-message" className={labelCls}>
-                  Message <span className="ml-1.5 text-[9px]">optional</span>
-                </label>
-                <textarea
-                  id="f-message"
-                  name="message"
-                  placeholder="Anything you'd like Konstantin to know."
-                  maxLength={2000}
-                  className={`${fieldCls} min-h-24 resize-y`}
-                />
+              <div className="md:col-span-2">
+                <Field name="country" label="Country" placeholder="Start typing…" required autoComplete="country-name" list="countries" />
+                <datalist id="countries">
+                  {COUNTRIES.map((c) => <option key={c} value={c} />)}
+                </datalist>
               </div>
+
+              <details className="md:col-span-2">
+                <summary className="cursor-pointer select-none font-mono text-[11px] uppercase tracking-[0.16em] text-white/60 hover:text-gold">
+                  + Add details (optional)
+                </summary>
+                <div className="mt-3.5 grid grid-cols-1 gap-3.5 md:grid-cols-2">
+                  <Field name="social" label="Instagram / X" optional placeholder="@handle" autoComplete="username" />
+                  <div className="flex flex-col gap-1.5">
+                    <label htmlFor="f-handicap" className={labelCls}>
+                      Handicap <span className="ml-1.5 text-[9px]">optional</span>
+                    </label>
+                    <select id="f-handicap" name="handicap" defaultValue="" className={fieldCls}>
+                      <option value="">Choose one</option>
+                      <option>Beginner</option>
+                      <option>20+</option>
+                      <option>10–20</option>
+                      <option>Under 10</option>
+                      <option>Scratch</option>
+                      <option>Don&apos;t know</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1.5 md:col-span-2">
+                    <label htmlFor="f-message" className={labelCls}>
+                      Message <span className="ml-1.5 text-[9px]">optional</span>
+                    </label>
+                    <textarea
+                      id="f-message"
+                      name="message"
+                      placeholder="Anything you'd like Konstantin to know."
+                      maxLength={2000}
+                      className={`${fieldCls} min-h-24 resize-y`}
+                    />
+                  </div>
+                </div>
+              </details>
 
               <div className="flex flex-wrap items-center justify-between gap-3 md:col-span-2">
                 <button
@@ -86,11 +112,12 @@ export function Reserve() {
 }
 
 function Field({
-  name, label, type = "text", placeholder, required, optional, autoComplete, inputMode,
+  name, label, type = "text", placeholder, required, optional, autoComplete, inputMode, list,
 }: {
   name: string; label: string; type?: string; placeholder?: string;
   required?: boolean; optional?: boolean;
   autoComplete?: string; inputMode?: "text" | "email" | "tel" | "numeric" | "url" | "search";
+  list?: string;
 }) {
   const id = `f-${name}`;
   return (
@@ -107,8 +134,20 @@ function Field({
         required={required}
         autoComplete={autoComplete}
         inputMode={inputMode}
+        list={list}
         className={fieldCls}
       />
     </div>
   );
 }
+
+// Common golf-playing markets first, then big shipping markets.
+const COUNTRIES = [
+  "United States", "United Kingdom", "Canada", "Australia", "Ireland",
+  "South Korea", "Japan", "China", "Hong Kong", "Taiwan", "Singapore",
+  "Thailand", "Vietnam", "Indonesia", "Philippines", "Malaysia", "India",
+  "Germany", "France", "Spain", "Italy", "Netherlands", "Sweden", "Norway",
+  "Denmark", "Finland", "Switzerland", "Austria", "Belgium", "Portugal",
+  "Poland", "Czechia", "Greece", "Turkey", "UAE", "Saudi Arabia", "Qatar",
+  "South Africa", "New Zealand", "Mexico", "Brazil", "Argentina", "Chile",
+];

@@ -47,10 +47,14 @@ export function Blueprint() {
               <span className="font-display text-[13px] font-bold uppercase tracking-[0.18em] text-gold">Performance</span>
             </div>
 
-            {/* Glove silhouette */}
+            {/* Glove silhouette + photo slot. Drop /public/media/glove.png (transparent PNG, ~1000x1250) to replace. */}
             <div className="absolute inset-0 grid place-items-center">
               <div className="relative aspect-[4/5] w-[78%] max-w-[460px]">
                 <div className="absolute inset-0 rounded-[30%_30%_24%_24%/18%_18%_12%_12%] border border-dashed border-white/20 bg-white/[0.02]" />
+                <div
+                  aria-hidden
+                  className="absolute inset-0 bg-[url('/media/glove.png')] bg-contain bg-center bg-no-repeat"
+                />
                 {tags.map((t) => (
                   <div
                     key={t.label}

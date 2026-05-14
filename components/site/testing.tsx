@@ -1,15 +1,15 @@
 import { Play } from "lucide-react";
 import { SectionHead } from "./section-head";
 
-// Placeholder tiles. Each represents a real video / photo slot the founder
-// will drop content into later. No timelines, no day counters, no progression.
+// Each tile auto-renders /public/media/testing-0X.mp4 (or .jpg) when present.
+// See public/media/README.md for filenames and specs.
 const tiles = [
-  { label: "Range Testing" },
-  { label: "Grip Testing" },
-  { label: "Sweat Conditions" },
-  { label: "Factory Visit" },
-  { label: "Golfer Reactions" },
-  { label: "Product Closeup" },
+  { label: "Range Testing",    src: "/media/testing-01.mp4" },
+  { label: "Grip Testing",     src: "/media/testing-02.mp4" },
+  { label: "Sweat Conditions", src: "/media/testing-03.mp4" },
+  { label: "Factory Visit",    src: "/media/testing-04.mp4" },
+  { label: "Golfer Reactions", src: "/media/testing-05.mp4" },
+  { label: "Product Closeup",  src: "/media/testing-06.mp4" },
 ];
 
 export function Testing() {
@@ -28,7 +28,15 @@ export function Testing() {
               key={t.label}
               className="group relative aspect-[9/14] overflow-hidden rounded-[10px] border border-white/10 bg-[repeating-linear-gradient(135deg,rgba(255,255,255,.03)_0_2px,transparent_2px_12px),linear-gradient(180deg,#0f2230,#0a1a25)] md:aspect-[4/5]"
             >
-              <div className="absolute inset-0 grid place-items-center opacity-70 transition group-hover:opacity-100">
+              <video
+                className="absolute inset-0 size-full object-cover"
+                src={t.src}
+                muted
+                loop
+                playsInline
+                preload="none"
+              />
+              <div className="pointer-events-none absolute inset-0 grid place-items-center opacity-70 transition group-hover:opacity-100">
                 <div className="grid size-12 place-items-center rounded-full border border-white/30 bg-white/10 backdrop-blur">
                   <Play className="size-4 fill-white" strokeWidth={0} />
                 </div>
