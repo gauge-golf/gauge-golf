@@ -1,50 +1,29 @@
 import { Plus } from "lucide-react";
 import { SectionHead } from "./section-head";
+import { getMessages, type Locale } from "@/lib/i18n";
 
-const qa = [
-  {
-    q: "Is the glove available now?",
-    a: "Early samples are currently being tested before the first production batch release.",
-    open: true,
-  },
-  {
-    q: "How do orders work?",
-    a: "Early requests are currently handled directly through email and social media.",
-  },
-  {
-    q: "Do you ship internationally?",
-    a: "Yes. International shipping will be available for the first production batch.",
-  },
-  {
-    q: "Why only one product?",
-    a: "Gauge Golf is focused on building one great glove first.",
-  },
-  {
-    q: "Is this a company?",
-    a: "Gauge Golf is currently an independent founder-led project.",
-  },
-];
-
-export function Faq() {
+export function Faq({ locale = "en" }: { locale?: Locale }) {
+  const t = getMessages(locale).faq;
   return (
     <section id="faq" className="border-t border-white/10 py-20 md:py-32">
       <div className="mx-auto max-w-[1320px] px-6 md:px-10">
         <SectionHead
-          num="07 — FAQ"
-          title={<>Straight<br />answers.</>}
+          num={t.num}
+          title={<>{t.title_line1}<br />{t.title_line2}</>}
           lede={
             <>
-              Founder-led project. Ask anything missing —{" "}
-              <a href="mailto:hello@gauge-golf.com" className="text-gold">hello@gauge-golf.com</a>.
+              {t.lede_pre}
+              <a href="mailto:hello@gauge-golf.com" className="text-gold">hello@gauge-golf.com</a>
+              {t.lede_post}
             </>
           }
         />
 
         <div className="flex flex-col">
-          {qa.map((item, i) => (
+          {t.items.map((item, i) => (
             <details
               key={i}
-              open={item.open}
+              open={i === 0}
               className="group border-t border-white/10 px-1 py-5 last:border-b last:border-white/10"
             >
               <summary className="flex cursor-pointer list-none items-start justify-between gap-6 font-display text-lg font-bold leading-tight tracking-tight md:text-2xl">

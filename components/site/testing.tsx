@@ -1,60 +1,79 @@
 import Image from "next/image";
 import { SectionHead } from "./section-head";
 import { LiteYouTube } from "./lite-youtube";
+import { getMessages, type Locale, type Messages } from "@/lib/i18n";
+
+type LabelKey = keyof Messages["testing"]["labels"];
+type LocKey = keyof Messages["testing"]["locations"];
+type SoonKey = "soon" | "soon_june";
 
 type Tile =
   | {
       kind: "video";
-      label: string;
+      labelKey: LabelKey;
       day: number;
-      location: string;
+      locKey: LocKey;
       youtubeId: string;
-      poster?: string; // optional 9:16 custom cover; falls back to YouTube thumb
+      poster?: string;
     }
   | {
       kind: "soon";
-      label: string;
-      hint: string;
-      poster?: string; // optional 9:16 preview cover
+      labelKey: LabelKey;
+      hintKey: SoonKey;
+      poster?: string;
     };
 
 // Season 1 — 9 published Shorts + 3 upcoming. Add new ones at the end.
 const tiles: Tile[] = [
-  { kind: "video", label: "The Idea",            day: 1,  location: "Bali",       youtubeId: "WVyQSwEwuIc" },
-  { kind: "video", label: "MVP · Elastic Band",  day: 8,  location: "Range",      youtubeId: "EniF9cZfPcs" },
-  { kind: "video", label: "Real Course",         day: 9,  location: "On Course",  youtubeId: "QHxSvcpWl_o" },
-  { kind: "video", label: "Wedge Practice",      day: 15, location: "Range",      youtubeId: "IFe9rSKUVsw" },
-  { kind: "video", label: "Sweat Problem",       day: 21, location: "+30°C",      youtubeId: "n3wvTMAaLq8" },
-  { kind: "video", label: "PGA Academy",         day: 22, location: "PGA",        youtubeId: "rxMDiEfzUqY" },
-  { kind: "video", label: "Arrived in China",    day: 32, location: "China",      youtubeId: "5rsgDNElkIo", poster: "/media/gauge-post-03.png" },
-  { kind: "video", label: "To the Factory",      day: 36, location: "Guangzhou",  youtubeId: "coDPuHp1z5U" },
-  { kind: "video", label: "Material Selection",  day: 42, location: "Factory",    youtubeId: "gPjv741sCns", poster: "/media/gauge-post-01.png" },
-  { kind: "soon",  label: "First Sample",        hint: "Coming soon" },
-  { kind: "soon",  label: "Field Testing",       hint: "Coming soon" },
-  { kind: "soon",  label: "Korea Launch",        hint: "Coming June",   poster: "/media/gauge-post-02.png" },
+  { kind: "video", labelKey: "idea",          day: 1,  locKey: "bali",      youtubeId: "WVyQSwEwuIc" },
+  { kind: "video", labelKey: "mvp",           day: 8,  locKey: "range",     youtubeId: "EniF9cZfPcs" },
+  { kind: "video", labelKey: "real_course",   day: 9,  locKey: "on_course", youtubeId: "QHxSvcpWl_o" },
+  { kind: "video", labelKey: "wedge",         day: 15, locKey: "range",     youtubeId: "IFe9rSKUVsw" },
+  { kind: "video", labelKey: "sweat",         day: 21, locKey: "heat",      youtubeId: "n3wvTMAaLq8" },
+  { kind: "video", labelKey: "pga",           day: 22, locKey: "pga",       youtubeId: "rxMDiEfzUqY" },
+  { kind: "video", labelKey: "arrived_china", day: 32, locKey: "china",     youtubeId: "5rsgDNElkIo", poster: "/media/gauge-post-03.png" },
+  { kind: "video", labelKey: "to_factory",    day: 36, locKey: "guangzhou", youtubeId: "coDPuHp1z5U" },
+  { kind: "video", labelKey: "materials",     day: 42, locKey: "factory",   youtubeId: "gPjv741sCns", poster: "/media/gauge-post-01.png" },
+  { kind: "soon",  labelKey: "first_sample",  hintKey: "soon" },
+  { kind: "soon",  labelKey: "field_testing", hintKey: "soon" },
+  { kind: "soon",  labelKey: "korea_launch",  hintKey: "soon_june", poster: "/media/gauge-post-02.png" },
 ];
 
-export function Testing() {
+export function Testing({ locale = "en" }: { locale?: Locale }) {
+  const t = getMessages(locale).testing;
   return (
     <section id="testing" className="border-t border-white/10 py-20 md:py-32">
       <div className="mx-auto max-w-[1320px] px-6 md:px-10">
         <SectionHead
-          num="02 — Testing"
-          title={<>Real testing.<br />Real feedback.</>}
-          lede="Driving ranges, factory floors, sweat and weather — the videos speak for themselves."
+          num={t.num}
+          title={<>{t.title_line1}<br />{t.title_line2}</>}
+          lede={t.lede}
         />
 
         <div className="mb-5 flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-white/50">
           <span className="size-1.5 rounded-full bg-gold" />
-          <span>Season 1 — Building from scratch</span>
+          <span>{t.season}</span>
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 lg:gap-4">
-          {tiles.map((t, i) =>
-            t.kind === "video" ? (
-              <VideoCard key={t.youtubeId} {...t} />
+          {tiles.map((tile, i) =>
+            tile.kind === "video" ? (
+              <VideoCard
+                key={tile.youtubeId}
+                day={tile.day}
+                youtubeId={tile.youtubeId}
+                poster={tile.poster}
+                label={t.labels[tile.labelKey]}
+                location={t.locations[tile.locKey]}
+                dayWord={t.day}
+              />
             ) : (
-              <SoonCard key={`soon-${i}`} {...t} />
+              <SoonCard
+                key={`soon-${i}`}
+                poster={tile.poster}
+                label={t.labels[tile.labelKey]}
+                hint={t[tile.hintKey]}
+              />
             )
           )}
         </div>
@@ -69,14 +88,22 @@ function VideoCard({
   location,
   youtubeId,
   poster,
-}: Extract<Tile, { kind: "video" }>) {
+  dayWord,
+}: {
+  label: string;
+  day: number;
+  location: string;
+  youtubeId: string;
+  poster?: string;
+  dayWord: string;
+}) {
   return (
     <figure className="group relative aspect-[9/16] overflow-hidden rounded-[10px] border border-white/10 bg-black">
-      <LiteYouTube id={youtubeId} title={`Day ${day} — ${label}`} posterOverride={poster} />
+      <LiteYouTube id={youtubeId} title={`${dayWord} ${day} — ${label}`} posterOverride={poster} />
 
       {/* Top-right: Day chip */}
       <div className="pointer-events-none absolute right-2.5 top-2.5 rounded border border-gold/50 bg-black/60 px-1.5 py-1 font-mono text-[9px] uppercase tracking-[0.18em] text-gold backdrop-blur">
-        Day {day}
+        {dayWord} {day}
       </div>
 
       {/* Bottom: label + location */}
@@ -86,7 +113,7 @@ function VideoCard({
             {label}
           </div>
           <div className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.18em] text-white/60">
-            {location} · Day {day}
+            {location} · {dayWord} {day}
           </div>
         </div>
       </figcaption>
@@ -94,7 +121,7 @@ function VideoCard({
   );
 }
 
-function SoonCard({ label, hint, poster }: Extract<Tile, { kind: "soon" }>) {
+function SoonCard({ label, hint, poster }: { label: string; hint: string; poster?: string }) {
   if (poster) {
     // Preview tile: real cover image + Coming-X chip overlay
     return (

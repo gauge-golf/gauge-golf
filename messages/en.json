@@ -1,0 +1,196 @@
+{
+  "nav": {
+    "story": "Story",
+    "product": "Product",
+    "testing": "Testing",
+    "faq": "FAQ",
+    "reserve": "Reserve",
+    "lang_aria": "Change language"
+  },
+  "hero": {
+    "eyebrow": "Built in public",
+    "title_line1": "One Glove.",
+    "title_line2_pre": "Every ",
+    "title_line2_gold": "Condition.",
+    "sub": "Built for golfers who practice until their hands hurt.",
+    "cta_primary": "Reserve Early Access",
+    "cta_secondary": "Watch Testing Videos",
+    "stats": [
+      { "k": "Designed for", "v": "Long practice sessions" },
+      { "k": "Built for", "v": "Heat · Rain · Humidity" },
+      { "k": "Focus", "v": "One glove. Built right." }
+    ]
+  },
+  "ribbon": [
+    { "t": "Heat" },
+    { "t": "Rain" },
+    { "t": "Grip" },
+    { "t": "400 swings per session", "gold": true },
+    { "t": "Wrist stability" },
+    { "t": "All weather" },
+    { "t": "Universal performance" },
+    { "t": "Built in public", "gold": true },
+    { "t": "One glove" },
+    { "t": "Built right first" }
+  ],
+  "testing": {
+    "num": "02 — Testing",
+    "title_line1": "Real testing.",
+    "title_line2": "Real feedback.",
+    "lede": "Driving ranges, factory floors, sweat and weather — the videos speak for themselves.",
+    "season": "Season 1 — Building from scratch",
+    "day": "Day",
+    "labels": {
+      "idea": "The Idea",
+      "mvp": "MVP · Elastic Band",
+      "real_course": "Real Course",
+      "wedge": "Wedge Practice",
+      "sweat": "Sweat Problem",
+      "pga": "PGA Academy",
+      "arrived_china": "Arrived in China",
+      "to_factory": "To the Factory",
+      "materials": "Material Selection",
+      "first_sample": "First Sample",
+      "field_testing": "Field Testing",
+      "korea_launch": "Korea Launch"
+    },
+    "locations": {
+      "bali": "Bali",
+      "range": "Range",
+      "on_course": "On Course",
+      "heat": "+30°C",
+      "pga": "PGA",
+      "china": "China",
+      "guangzhou": "Guangzhou",
+      "factory": "Factory"
+    },
+    "soon": "Coming soon",
+    "soon_june": "Coming June"
+  },
+  "blueprint": {
+    "num": "03 — The Product",
+    "title_line1": "Built for",
+    "title_line2": "repetition.",
+    "lede": "A universal performance golf glove designed for grip, wrist stability and repetitive practice in heat, rain and all-weather training.",
+    "feats": [
+      { "h": "Wrist Stability", "p": "Additional support designed for repetitive swing sessions." },
+      { "h": "Grip Pattern", "p": "Consistent grip performance in sweat and rain." },
+      { "h": "Reinforced Palm", "p": "Built for high-volume driving range practice." },
+      { "h": "Microfiber Construction", "p": "Soft feel with improved durability." },
+      { "h": "Universal Conditions", "p": "Designed for indoor, outdoor, humid and wet environments." }
+    ]
+  },
+  "founder": {
+    "num": "04 — The Founder",
+    "title_line1": "Built",
+    "title_line2": "independently.",
+    "lede": "One golfer, building a better glove for high-volume practice — and sharing the process openly.",
+    "caption": "Konstantin · Founder",
+    "p1_pre": "I'm a handicap-16 golfer who spends most of his time ",
+    "p1_gold": "practicing on driving ranges.",
+    "p2": "After dealing with wrist pain, glove durability issues and inconsistent grip during long practice sessions, I started building a glove focused on repetitive training and all-weather performance.",
+    "p3": "Gauge Golf documents that process publicly through real testing, manufacturing and field feedback.",
+    "sig_name": "Konstantin",
+    "sig_full": "Konstantin Kazarichuk",
+    "sig_role": "Founder · hello@gauge-golf.com"
+  },
+  "metrics": {
+    "num": "05 — At a Glance",
+    "title_line1": "What Gauge",
+    "title_line2": "stands for.",
+    "lede": "A simple, focused product — built for repetition, weather and the player who actually practices.",
+    "items": [
+      { "v": "400", "d": "Swings Per Session" },
+      { "v": "All-Weather", "d": "Heat · Rain · Humidity" },
+      { "v": "Founder-Led", "d": "Independent Product Build" },
+      { "v": "One Product", "d": "Built Right First" }
+    ]
+  },
+  "reserve": {
+    "num": "06 — Early Access",
+    "title": "Early Access",
+    "lede": "Early access requests are currently handled directly by the founder before the first production batch opens.",
+    "ok_chip": "Confirmed",
+    "ok_title": "You're on the list.",
+    "ok_body": "You'll receive future updates and first-batch access information directly from Konstantin.",
+    "f_name": "Name",
+    "f_name_ph": "First and last",
+    "f_email": "Email",
+    "f_email_ph": "you@email.com",
+    "f_country": "Country",
+    "f_state": "State",
+    "f_state_ph": "Choose your state",
+    "f_where": "Where are you based?",
+    "f_where_ph": "City, country",
+    "f_hand": "Glove hand",
+    "f_size": "Glove size",
+    "f_choose": "Choose",
+    "hand_left": "Left",
+    "hand_right": "Right",
+    "hand_both": "Both",
+    "hand_notsure": "Not sure",
+    "size_notsure": "Not sure",
+    "size_help": "Need help with size?",
+    "details_more": "+ Add details (optional)",
+    "f_social": "Instagram / X",
+    "f_social_ph": "@handle",
+    "f_handicap": "Handicap",
+    "f_choose_one": "Choose one",
+    "h_beginner": "Beginner",
+    "h_dontknow": "Don't know",
+    "f_message": "Message",
+    "f_message_ph": "Anything you'd like Konstantin to know.",
+    "optional": "optional",
+    "sending": "Sending…",
+    "submit": "Reserve a Pair",
+    "no_spam": "No spam · Founder replies directly",
+    "country": {
+      "us": "USA",
+      "kr": "Korea",
+      "jp": "Japan",
+      "sg": "Singapore",
+      "other": "Other"
+    }
+  },
+  "faq": {
+    "num": "07 — FAQ",
+    "title_line1": "Straight",
+    "title_line2": "answers.",
+    "lede_pre": "Founder-led project. Ask anything missing — ",
+    "lede_post": ".",
+    "items": [
+      { "q": "Is the glove available now?", "a": "Early samples are currently being tested before the first production batch release." },
+      { "q": "How do orders work?", "a": "Early requests are currently handled directly through email and social media." },
+      { "q": "Do you ship internationally?", "a": "Yes. International shipping will be available for the first production batch." },
+      { "q": "Why only one product?", "a": "Gauge Golf is focused on building one great glove first." },
+      { "q": "Is this a company?", "a": "Gauge Golf is currently an independent founder-led project." }
+    ]
+  },
+  "footer": {
+    "tagline_line1": "Universal performance golf glove.",
+    "tagline_line2": "Built in public.",
+    "h_nav": "Navigation",
+    "h_contact": "Contact",
+    "h_legal": "Legal",
+    "nav_story": "Story",
+    "nav_product": "Product",
+    "nav_testing": "Testing",
+    "nav_access": "Early Access",
+    "nav_faq": "FAQ",
+    "legal_privacy": "Privacy Policy",
+    "legal_terms": "Terms of Sale",
+    "legal_shipping": "Shipping & Delivery",
+    "legal_refunds": "Refunds & Returns",
+    "legal_imprint": "About this site",
+    "copyright": "© Gauge Golf · Operated by Konstantin Kazarichuk · Independent seller"
+  },
+  "sticky": {
+    "eyebrow": "Early access · Founder-led",
+    "cta": "Reserve"
+  },
+  "meta": {
+    "title": "Gauge Golf — One Glove. Every Condition.",
+    "description": "A universal performance golf glove designed for grip, wrist stability and long practice sessions in heat, rain and all-weather training.",
+    "og_short": "Universal performance golf glove. Built in public."
+  }
+}

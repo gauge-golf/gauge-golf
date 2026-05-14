@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Nav } from "@/components/site/nav";
 import { Hero } from "@/components/site/hero";
 import { Ribbon } from "@/components/site/ribbon";
@@ -9,11 +10,30 @@ import { Reserve } from "@/components/site/reserve";
 import { Faq } from "@/components/site/faq";
 import { Footer } from "@/components/site/footer";
 import { StickyCta } from "@/components/site/sticky-cta";
+import { HtmlLangSync } from "@/components/site/html-lang-sync";
+import ko from "@/messages/ko.json";
 
-export default function Page() {
-  const locale = "en" as const;
+export const metadata: Metadata = {
+  title: ko.meta.title,
+  description: ko.meta.description,
+  alternates: { canonical: "/ko" },
+  openGraph: {
+    title: ko.meta.title,
+    description: ko.meta.og_short,
+    url: "/ko",
+    locale: "ko_KR",
+  },
+  twitter: {
+    title: ko.meta.title,
+    description: ko.meta.og_short,
+  },
+};
+
+export default function KoPage() {
+  const locale = "ko" as const;
   return (
     <>
+      <HtmlLangSync locale={locale} />
       <Nav locale={locale} />
       <main id="top">
         <Hero locale={locale} />

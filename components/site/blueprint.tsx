@@ -1,22 +1,16 @@
 import Image from "next/image";
 import { SectionHead } from "./section-head";
+import { getMessages, type Locale } from "@/lib/i18n";
 
-const feats = [
-  ["01", "Wrist Stability", "Additional support designed for repetitive swing sessions."],
-  ["02", "Grip Pattern", "Consistent grip performance in sweat and rain."],
-  ["03", "Reinforced Palm", "Built for high-volume driving range practice."],
-  ["04", "Microfiber Construction", "Soft feel with improved durability."],
-  ["05", "Universal Conditions", "Designed for indoor, outdoor, humid and wet environments."],
-];
-
-export function Blueprint() {
+export function Blueprint({ locale = "en" }: { locale?: Locale }) {
+  const t = getMessages(locale).blueprint;
   return (
     <section id="product" className="border-t border-white/10 py-20 md:py-32">
       <div className="mx-auto max-w-[1320px] px-6 md:px-10">
         <SectionHead
-          num="03 — The Product"
-          title={<>Built for<br />repetition.</>}
-          lede="A universal performance golf glove designed for grip, wrist stability and repetitive practice in heat, rain and all-weather training."
+          num={t.num}
+          title={<>{t.title_line1}<br />{t.title_line2}</>}
+          lede={t.lede}
         />
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:gap-12">
@@ -44,13 +38,16 @@ export function Blueprint() {
 
           {/* Features */}
           <div className="flex flex-col gap-4">
-            {feats.map(([ix, h, p]) => (
-              <div key={ix} className="relative rounded-[10px] border border-white/10 bg-white/[0.015] p-4.5 pl-14">
-                <span className="absolute left-4.5 top-4.5 font-mono text-[11px] uppercase tracking-[0.18em] text-gold">{ix}</span>
-                <h4 className="m-0 mb-1 font-display text-lg font-bold">{h}</h4>
-                <p className="m-0 text-sm text-white/60">{p}</p>
-              </div>
-            ))}
+            {t.feats.map((f, idx) => {
+              const ix = String(idx + 1).padStart(2, "0");
+              return (
+                <div key={ix} className="relative rounded-[10px] border border-white/10 bg-white/[0.015] p-4.5 pl-14">
+                  <span className="absolute left-4.5 top-4.5 font-mono text-[11px] uppercase tracking-[0.18em] text-gold">{ix}</span>
+                  <h4 className="m-0 mb-1 font-display text-lg font-bold">{f.h}</h4>
+                  <p className="m-0 text-sm text-white/60">{f.p}</p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

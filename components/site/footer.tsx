@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Youtube, Instagram, Facebook, Mail, MessageCircle } from "lucide-react";
+import { getMessages, localeHref, type Locale } from "@/lib/i18n";
 
 // TikTok inline (lucide TikTok deprecated)
 function TikTok({ className }: { className?: string }) {
@@ -19,7 +20,8 @@ const socials = [
   { Icon: Mail,           href: "mailto:hello@gauge-golf.com",            label: "Email" },
 ];
 
-export function Footer() {
+export function Footer({ locale = "en" }: { locale?: Locale }) {
+  const t = getMessages(locale).footer;
   return (
     <footer className="border-t border-white/10 px-0 pb-10 pt-16">
       <div className="mx-auto max-w-[1320px] px-6 md:px-10">
@@ -33,7 +35,7 @@ export function Footer() {
               className="mb-5 h-auto w-[200px] md:w-[280px]"
             />
             <p className="max-w-[36ch] text-white/60">
-              Universal performance golf glove.<br />Built in public.
+              {t.tagline_line1}<br />{t.tagline_line2}
             </p>
             <div className="mt-5 flex flex-wrap gap-2.5">
               {socials.map(({ Icon, href, label }) => (
@@ -52,14 +54,14 @@ export function Footer() {
           </div>
 
           <div>
-            <h5 className="m-0 mb-3.5 font-mono text-[10px] uppercase tracking-[0.22em] text-white/40">Navigation</h5>
+            <h5 className="m-0 mb-3.5 font-mono text-[10px] uppercase tracking-[0.22em] text-white/40">{t.h_nav}</h5>
             <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
               {[
-                ["#story", "Story"],
-                ["#product", "Product"],
-                ["#testing", "Testing"],
-                ["#access", "Early Access"],
-                ["#faq", "FAQ"],
+                [localeHref(locale, "/#story"),   t.nav_story],
+                [localeHref(locale, "/#product"), t.nav_product],
+                [localeHref(locale, "/#testing"), t.nav_testing],
+                [localeHref(locale, "/#access"),  t.nav_access],
+                [localeHref(locale, "/#faq"),     t.nav_faq],
               ].map(([h, l]) => (
                 <li key={h}><a href={h} className="font-display text-sm font-semibold hover:text-gold">{l}</a></li>
               ))}
@@ -67,7 +69,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h5 className="m-0 mb-3.5 font-mono text-[10px] uppercase tracking-[0.22em] text-white/40">Contact</h5>
+            <h5 className="m-0 mb-3.5 font-mono text-[10px] uppercase tracking-[0.22em] text-white/40">{t.h_contact}</h5>
             <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
               <li><a href="mailto:hello@gauge-golf.com" className="font-display text-sm font-semibold hover:text-gold">hello@gauge-golf.com</a></li>
               <li><a href="https://wa.me/6281225290989" target="_blank" rel="noopener noreferrer" className="font-display text-sm font-semibold hover:text-gold">+62 812 2529 0989 · WhatsApp</a></li>
@@ -78,14 +80,14 @@ export function Footer() {
           </div>
 
           <div>
-            <h5 className="m-0 mb-3.5 font-mono text-[10px] uppercase tracking-[0.22em] text-white/40">Legal</h5>
+            <h5 className="m-0 mb-3.5 font-mono text-[10px] uppercase tracking-[0.22em] text-white/40">{t.h_legal}</h5>
             <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
               {[
-                ["/privacy", "Privacy Policy"],
-                ["/terms", "Terms of Sale"],
-                ["/shipping", "Shipping & Delivery"],
-                ["/refunds", "Refunds & Returns"],
-                ["/imprint", "About this site"],
+                ["/privacy",  t.legal_privacy],
+                ["/terms",    t.legal_terms],
+                ["/shipping", t.legal_shipping],
+                ["/refunds",  t.legal_refunds],
+                ["/imprint",  t.legal_imprint],
               ].map(([h, l]) => (
                 <li key={h}><a href={h} className="font-display text-sm font-semibold hover:text-gold">{l}</a></li>
               ))}
@@ -94,7 +96,7 @@ export function Footer() {
         </div>
 
         <div className="mt-14 flex flex-wrap justify-between gap-3 border-t border-white/10 pt-6 font-mono text-[11px] uppercase tracking-[0.16em] text-white/40">
-          <span>© Gauge Golf · Operated by Konstantin Kazarichuk · Independent seller</span>
+          <span>{t.copyright}</span>
           <a href="mailto:hello@gauge-golf.com" className="hover:text-gold">hello@gauge-golf.com</a>
         </div>
       </div>

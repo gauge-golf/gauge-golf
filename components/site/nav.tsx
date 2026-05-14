@@ -1,18 +1,20 @@
 import Link from "next/link";
 import Image from "next/image";
+import { LangSwitcher } from "./lang-switcher";
+import { getMessages, localeHref, type Locale } from "@/lib/i18n";
 
-const links = [
-  { href: "#story", label: "Story" },
-  { href: "#product", label: "Product" },
-  { href: "#testing", label: "Testing" },
-  { href: "#faq", label: "FAQ" },
-];
-
-export function Nav() {
+export function Nav({ locale = "en" }: { locale?: Locale }) {
+  const t = getMessages(locale).nav;
+  const links = [
+    { href: localeHref(locale, "/#story"),   label: t.story },
+    { href: localeHref(locale, "/#product"), label: t.product },
+    { href: localeHref(locale, "/#testing"), label: t.testing },
+    { href: localeHref(locale, "/#faq"),     label: t.faq },
+  ];
   return (
     <header className="fixed inset-x-0 top-0 z-50 bg-gradient-to-b from-ink/90 via-ink/60 to-transparent backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-[1320px] items-center justify-between px-6 md:px-10">
-        <Link href="#top" aria-label="Gauge Golf home" className="flex items-center gap-2.5">
+        <Link href={localeHref(locale, "/")} aria-label="Gauge Golf home" className="flex items-center gap-2.5">
           <Image
             src="/media/GAUGE-LOGO.svg"
             alt="Gauge Golf"
@@ -36,12 +38,15 @@ export function Nav() {
           ))}
         </nav>
 
-        <a
-          href="#access"
-          className="rounded-full border border-gold px-3.5 py-2 font-display text-[11px] font-bold uppercase tracking-[0.16em] text-gold transition hover:bg-gold hover:text-ink"
-        >
-          Reserve
-        </a>
+        <div className="flex items-center gap-2.5">
+          <LangSwitcher locale={locale} />
+          <a
+            href={localeHref(locale, "/#access")}
+            className="rounded-full border border-gold px-3.5 py-2 font-display text-[11px] font-bold uppercase tracking-[0.16em] text-gold transition hover:bg-gold hover:text-ink"
+          >
+            {t.reserve}
+          </a>
+        </div>
       </div>
     </header>
   );

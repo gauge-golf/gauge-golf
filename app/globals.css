@@ -34,6 +34,22 @@ body {
   position: relative;
   width: 100%;
 }
+
+/* Korean locale: swap to Pretendard (matches Saira's geometric feel, premium KR market standard). */
+html[lang="ko"] body,
+html[lang="ko"] .font-display,
+html[lang="ko"] {
+  font-family:
+    "Pretendard Variable", Pretendard,
+    -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+    "Malgun Gothic", system-ui, sans-serif;
+  /* Slightly tighter line-height feels more native in Hangul. */
+  word-break: keep-all;
+}
+html[lang="ko"] .font-mono {
+  /* Keep mono ASCII chips/labels in mono — Pretendard handles surrounding Hangul automatically. */
+  font-family: var(--font-mono);
+}
 ::selection { background: var(--color-gold); color: var(--color-ink); }
 
 /* Hide scrollbar in horizontal reels */

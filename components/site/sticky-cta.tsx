@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { getMessages, localeHref, type Locale } from "@/lib/i18n";
 
-export function StickyCta() {
+export function StickyCta({ locale = "en" }: { locale?: Locale }) {
+  const t = getMessages(locale).sticky;
   const [hidden, setHidden] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -26,13 +28,13 @@ export function StickyCta() {
     >
       <div className="flex min-w-0 flex-1 items-center gap-2.5 pl-3 font-mono text-[10px] uppercase tracking-[0.18em] text-white/60">
         <span className="size-1.5 flex-none rounded-full bg-gold" />
-        <span className="truncate">Early access · Founder-led</span>
+        <span className="truncate">{t.eyebrow}</span>
       </div>
       <a
-        href="#access"
+        href={localeHref(locale, "/#access")}
         className="inline-flex items-center rounded-full bg-gold px-4 py-2.5 font-display text-[11px] font-bold uppercase tracking-[0.14em] text-ink"
       >
-        Reserve
+        {t.cta}
       </a>
     </div>
   );

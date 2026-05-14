@@ -39,7 +39,7 @@ export default function Imprint() {
       <H2>Hosting</H2>
       <UL>
         <li>Website: Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, USA</li>
-        <li>Database: Neon, Inc., Wilmington, DE, USA</li>
+        <li>Database: Neon (neon.com) — data stored in the Singapore region (ap-southeast-1)</li>
       </UL>
 
       <H2>Legal documents</H2>

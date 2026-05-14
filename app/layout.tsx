@@ -78,6 +78,16 @@ const jsonLd = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${saira.variable} ${mono.variable}`}>
+      <head>
+        {/* Pretendard — premium Korean web font (active when html[lang="ko"]) */}
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"
+        />
+        <link rel="alternate" hrefLang="en" href={SITE_URL} />
+        <link rel="alternate" hrefLang="ko" href={`${SITE_URL}/ko`} />
+        <link rel="alternate" hrefLang="x-default" href={SITE_URL} />
+      </head>
       <body>
         <script
           type="application/ld+json"

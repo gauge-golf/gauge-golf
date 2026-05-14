@@ -1,7 +1,9 @@
 import { ArrowRight, Play } from "lucide-react";
 import { HeroCarousel } from "./hero-carousel";
+import { getMessages, localeHref, type Locale } from "@/lib/i18n";
 
-export function Hero() {
+export function Hero({ locale = "en" }: { locale?: Locale }) {
+  const t = getMessages(locale).hero;
   return (
     <section className="relative flex min-h-[100svh] items-stretch overflow-hidden pb-20 pt-32">
       {/* ambient bg */}
@@ -16,44 +18,40 @@ export function Hero() {
           <div>
             <div className="inline-flex w-max items-center gap-3 rounded-full border border-white/20 px-3 py-2 font-mono text-[11px] uppercase tracking-[0.16em] text-white/60">
               <span className="size-1.5 animate-pulse-gold rounded-full bg-gold" />
-              <span>Built in public</span>
+              <span>{t.eyebrow}</span>
             </div>
 
             <h1 className="mt-6 font-display text-[clamp(48px,9vw,132px)] font-extrabold uppercase leading-[0.92] tracking-[-0.02em]">
-              One Glove.<br />
-              Every <span className="text-gold">Condition.</span>
+              {t.title_line1}<br />
+              {t.title_line2_pre}<span className="text-gold">{t.title_line2_gold}</span>
             </h1>
 
             <p className="mt-6 max-w-[46ch] text-base text-white/60 md:text-lg">
-              Built for golfers who practice until their hands hurt.
+              {t.sub}
             </p>
 
             <div className="mt-7 flex flex-wrap gap-3">
               <a
-                href="#access"
+                href={localeHref(locale, "/#access")}
                 className="inline-flex items-center gap-2.5 whitespace-nowrap rounded-full bg-gold px-5 py-4 font-display text-[13px] font-bold uppercase tracking-[0.14em] text-ink transition hover:bg-gold-hi active:translate-y-px"
               >
-                Reserve Early Access
+                {t.cta_primary}
                 <ArrowRight className="size-3.5" strokeWidth={2.5} />
               </a>
               <a
-                href="#testing" className="inline-flex items-center gap-2.5 whitespace-nowrap rounded-full border border-white/20 px-5 py-4 font-display text-[13px] font-bold uppercase tracking-[0.14em] transition hover:border-white"
+                href={localeHref(locale, "/#testing")} className="inline-flex items-center gap-2.5 whitespace-nowrap rounded-full border border-white/20 px-5 py-4 font-display text-[13px] font-bold uppercase tracking-[0.14em] transition hover:border-white"
               >
-                Watch Testing Videos
+                {t.cta_secondary}
                 <Play className="size-3.5 fill-current" strokeWidth={0} />
               </a>
             </div>
           </div>
 
           <div className="flex flex-wrap gap-8 border-t border-white/10 pt-6">
-            {[
-              ["Designed for", "Long practice sessions"],
-              ["Built for", "Heat · Rain · Humidity"],
-              ["Focus", "One glove. Built right."],
-            ].map(([k, v]) => (
-              <div key={k} className="flex flex-col gap-1">
-                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/40">{k}</span>
-                <span className="font-display text-lg font-bold tracking-wide">{v}</span>
+            {t.stats.map((s) => (
+              <div key={s.k} className="flex flex-col gap-1">
+                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/40">{s.k}</span>
+                <span className="font-display text-lg font-bold tracking-wide">{s.v}</span>
               </div>
             ))}
           </div>

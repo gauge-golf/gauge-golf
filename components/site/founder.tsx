@@ -1,14 +1,16 @@
 import Image from "next/image";
 import { SectionHead } from "./section-head";
+import { getMessages, type Locale } from "@/lib/i18n";
 
-export function Founder() {
+export function Founder({ locale = "en" }: { locale?: Locale }) {
+  const t = getMessages(locale).founder;
   return (
     <section id="story" className="border-t border-white/10 py-20 md:py-32">
       <div className="mx-auto max-w-[1320px] px-6 md:px-10">
         <SectionHead
-          num="04 — The Founder"
-          title={<>Built<br />independently.</>}
-          lede="One golfer, building a better glove for high-volume practice — and sharing the process openly."
+          num={t.num}
+          title={<>{t.title_line1}<br />{t.title_line2}</>}
+          lede={t.lede}
         />
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14">
@@ -23,28 +25,28 @@ export function Founder() {
               className="object-cover object-left"
             />
             <div className="pointer-events-none absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/60 via-transparent to-transparent p-4.5">
-              <div className="font-mono text-[10px] uppercase tracking-[0.24em] text-white/80">Konstantin · Founder</div>
+              <div className="font-mono text-[10px] uppercase tracking-[0.24em] text-white/80">{t.caption}</div>
             </div>
           </div>
 
           {/* Body */}
           <div>
             <p className="m-0 text-[22px] leading-snug md:text-[26px]">
-              I&apos;m a handicap-16 golfer who spends most of his time{" "}
-              <span className="text-gold">practicing on driving ranges.</span>
+              {t.p1_pre}
+              <span className="text-gold">{t.p1_gold}</span>
             </p>
             <p className="mt-4 text-base text-white/60">
-              After dealing with wrist pain, glove durability issues and inconsistent grip during long practice sessions, I started building a glove focused on repetitive training and all-weather performance.
+              {t.p2}
             </p>
             <p className="mt-4 text-base text-white/60">
-              Gauge Golf documents that process publicly through real testing, manufacturing and field feedback.
+              {t.p3}
             </p>
 
             <div className="mt-8 flex items-center gap-3.5">
-              <span className="-rotate-[4deg] font-[Brush_Script_MT,Snell_Roundhand,Apple_Chancery,cursive] text-[32px] text-gold">Konstantin</span>
+              <span className="-rotate-[4deg] font-[Brush_Script_MT,Snell_Roundhand,Apple_Chancery,cursive] text-[32px] text-gold">{t.sig_name}</span>
               <div className="flex flex-col">
-                <span className="font-display text-sm font-bold tracking-wide">Konstantin Kazarichuk</span>
-                <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-white/40">Founder · hello@gauge-golf.com</span>
+                <span className="font-display text-sm font-bold tracking-wide">{t.sig_full}</span>
+                <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-white/40">{t.sig_role}</span>
               </div>
             </div>
           </div>

@@ -37,7 +37,7 @@ export default function Privacy() {
 
       <H2>3. Where it&apos;s stored</H2>
       <P>
-        Form submissions are stored in a Postgres database hosted by Neon (neon.com). The website is hosted by Vercel (vercel.com). Both providers offer industry-standard encryption in transit (HTTPS / TLS) and at rest.
+        Form submissions are stored in a Postgres database hosted by Neon (neon.com), with data physically located in the Singapore region (ap-southeast-1). The website is hosted by Vercel (vercel.com). Both providers offer industry-standard encryption in transit (HTTPS / TLS) and at rest.
       </P>
 
       <H2>4. Cookies & tracking</H2>
