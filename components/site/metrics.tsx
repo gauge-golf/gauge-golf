@@ -1,0 +1,36 @@
+import { SectionHead } from "./section-head";
+
+const items = [
+  { v: "400", d: "Swings Per Session" },
+  { v: "All-Weather", d: "Heat · Rain · Humidity" },
+  { v: "Founder-Led", d: "Independent Product Build" },
+  { v: "One Product", d: "Built Right First" },
+];
+
+export function Metrics() {
+  return (
+    <section className="border-t border-white/10 py-20 md:py-32">
+      <div className="mx-auto max-w-[1320px] px-6 md:px-10">
+        <SectionHead
+          num="05 — At a Glance"
+          title={<>What Gauge<br />stands for.</>}
+          lede="A simple, focused product — built for repetition, weather and the player who actually practices."
+        />
+
+        <div className="grid grid-cols-2 overflow-hidden rounded-[18px] border border-white/10 md:grid-cols-4">
+          {items.map((m, i) => (
+            <div
+              key={m.d}
+              className={`flex flex-col gap-3 p-7 ${i % 2 === 0 ? "border-r border-white/10" : ""} ${i < 2 ? "border-b border-white/10 md:border-b-0" : ""} md:border-r md:border-white/10 md:last:border-r-0 md:[&:nth-child(2)]:border-r md:[&:nth-child(4)]:border-r-0`}
+            >
+              <span className="font-display text-[clamp(32px,4.4vw,56px)] font-black leading-[0.95] tracking-[-0.02em]">
+                {m.v}
+              </span>
+              <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-white/60">{m.d}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
