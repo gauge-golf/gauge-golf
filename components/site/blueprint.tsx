@@ -1,13 +1,5 @@
 import { SectionHead } from "./section-head";
 
-const tags = [
-  { pos: "top-[8%] right-[18%]", label: "Microfiber Construction", side: "right" },
-  { pos: "top-[22%] left-[8%]", label: "Wrist Stability", side: "left" },
-  { pos: "top-[38%] right-[6%]", label: "Grip Pattern", side: "right" },
-  { pos: "bottom-[32%] left-[6%]", label: "Reinforced Palm", side: "left" },
-  { pos: "bottom-[18%] right-[8%]", label: "Universal Conditions", side: "right" },
-] as const;
-
 const feats = [
   ["01", "Wrist Stability", "Additional support designed for repetitive swing sessions."],
   ["02", "Grip Pattern", "Consistent grip performance in sweat and rain."],
@@ -27,48 +19,22 @@ export function Blueprint() {
         />
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:gap-12">
-          {/* Canvas */}
-          <div className="relative min-h-[460px] overflow-hidden rounded-[18px] border border-white/10 bg-[linear-gradient(rgba(255,255,255,.04)_1px,transparent_1px)_0_0/40px_40px,linear-gradient(90deg,rgba(255,255,255,.04)_1px,transparent_1px)_0_0/40px_40px,radial-gradient(80%_70%_at_50%_50%,rgba(241,192,78,.06),transparent_70%),linear-gradient(180deg,#061522,#04101a)]">
+          {/* Product image — 4:5, matches Hero / Founder slots. No text overlays (labels are on the image itself). */}
+          <div className="relative aspect-[4/5] overflow-hidden rounded-[18px] border border-white/20 bg-[linear-gradient(180deg,#0B2230,#061722)]">
+            <div
+              aria-hidden
+              className="absolute inset-0 bg-[url('/media/mvp-gauge.png')] bg-cover bg-center"
+            />
+
+            {/* Corner brackets — decorative, in corners only */}
             {[
-              ["top-3.5 left-3.5 border-r-0 border-b-0"],
-              ["top-3.5 right-3.5 border-l-0 border-b-0"],
-              ["bottom-3.5 left-3.5 border-r-0 border-t-0"],
-              ["bottom-3.5 right-3.5 border-l-0 border-t-0"],
-            ].map(([c], i) => (
-              <span key={i} className={`absolute size-3.5 border border-gold ${c}`} />
+              ["tl", "top-3 left-3 border-r-0 border-b-0"],
+              ["tr", "top-3 right-3 border-l-0 border-b-0"],
+              ["bl", "bottom-3 left-3 border-r-0 border-t-0"],
+              ["br", "bottom-3 right-3 border-l-0 border-t-0"],
+            ].map(([k, c]) => (
+              <span key={k} className={`pointer-events-none absolute size-3.5 border border-white/30 ${c}`} />
             ))}
-
-            <div className="absolute left-4 top-4 flex flex-col gap-1">
-              <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/40">Drawing</span>
-              <span className="font-display text-[13px] font-bold uppercase tracking-[0.18em] text-gold">GG-G01 · Universal</span>
-            </div>
-            <div className="absolute right-4 top-4 flex flex-col items-end gap-1 text-right">
-              <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/40">Type</span>
-              <span className="font-display text-[13px] font-bold uppercase tracking-[0.18em] text-gold">Performance</span>
-            </div>
-
-            {/* Glove silhouette + photo slot. Drop /public/media/glove.png (transparent PNG, ~1000x1250) to replace. */}
-            <div className="absolute inset-0 grid place-items-center">
-              <div className="relative aspect-[4/5] w-[78%] max-w-[460px]">
-                <div className="absolute inset-0 rounded-[30%_30%_24%_24%/18%_18%_12%_12%] border border-dashed border-white/20 bg-white/[0.02]" />
-                <div
-                  aria-hidden
-                  className="absolute inset-0 bg-[url('/media/design_palm.png')] bg-contain bg-center bg-no-repeat opacity-90"
-                />
-                {tags.map((t) => (
-                  <div
-                    key={t.label}
-                    className={`absolute flex items-center gap-2.5 font-mono text-[11px] uppercase tracking-[0.16em] ${t.pos} ${
-                      t.side === "right" ? "flex-row-reverse text-right" : ""
-                    }`}
-                  >
-                    <span className="size-2.5 rounded-full bg-gold shadow-[0_0_0_4px_rgba(241,192,78,0.18)]" />
-                    <span className="h-px w-10 bg-gold" />
-                    <span className="rounded border border-white/20 bg-black/40 px-2 py-1">{t.label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
 
           {/* Features */}
