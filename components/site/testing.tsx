@@ -14,6 +14,7 @@ type Tile =
       kind: "soon";
       label: string;
       hint: string;
+      poster?: string; // optional 9:16 preview cover
     };
 
 // Season 1 — 9 published Shorts + 3 upcoming. Add new ones at the end.
@@ -29,7 +30,7 @@ const tiles: Tile[] = [
   { kind: "video", label: "Material Selection",  day: 42, location: "Factory",    youtubeId: "gPjv741sCns", poster: "/media/gauge-post-01.png" },
   { kind: "soon",  label: "First Sample",        hint: "Coming soon" },
   { kind: "soon",  label: "Field Testing",       hint: "Coming soon" },
-  { kind: "soon",  label: "Production",          hint: "Coming soon" },
+  { kind: "soon",  label: "Korea Launch",        hint: "Coming June",   poster: "/media/gauge-post-02.png" },
 ];
 
 export function Testing() {
@@ -92,7 +93,36 @@ function VideoCard({
   );
 }
 
-function SoonCard({ label, hint }: Extract<Tile, { kind: "soon" }>) {
+function SoonCard({ label, hint, poster }: Extract<Tile, { kind: "soon" }>) {
+  if (poster) {
+    // Preview tile: real cover image + Coming-X chip overlay
+    return (
+      <figure className="relative aspect-[9/16] overflow-hidden rounded-[10px] border border-gold/40 bg-black">
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${poster})` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
+
+        {/* Top-right: Coming chip (mirrors Day chip on video tiles) */}
+        <div className="pointer-events-none absolute right-2.5 top-2.5 rounded border border-gold/60 bg-black/60 px-1.5 py-1 font-mono text-[9px] uppercase tracking-[0.18em] text-gold backdrop-blur">
+          {hint}
+        </div>
+
+        {/* Bottom: label */}
+        <figcaption className="pointer-events-none absolute inset-x-0 bottom-0 p-2.5">
+          <div className="font-display text-[13px] font-bold leading-tight">{label}</div>
+          <div className="mt-0.5 flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.18em] text-white/70">
+            <span className="size-1.5 animate-pulse-gold rounded-full bg-gold" />
+            <span>{hint}</span>
+          </div>
+        </figcaption>
+      </figure>
+    );
+  }
+
+  // Plain placeholder
   return (
     <figure className="relative aspect-[9/16] overflow-hidden rounded-[10px] border border-dashed border-white/15 bg-[repeating-linear-gradient(135deg,rgba(255,255,255,.025)_0_2px,transparent_2px_12px),linear-gradient(180deg,#0c1c28,#06121b)]">
       <div className="absolute inset-0 grid place-items-center p-4 text-center">
