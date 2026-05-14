@@ -21,8 +21,19 @@
 }
 
 /* Base */
-html, body { background: var(--color-ink); color: white; }
-body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+html, body {
+  background: var(--color-ink);
+  color: white;
+  /* Bulletproof horizontal overflow lock (iOS Safari / Instagram WebView) */
+  overflow-x: clip;
+  max-width: 100%;
+}
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+  width: 100%;
+}
 ::selection { background: var(--color-gold); color: var(--color-ink); }
 
 /* Hide scrollbar in horizontal reels */
