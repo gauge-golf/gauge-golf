@@ -16,9 +16,9 @@
     "cta_primary": "사전 예약하기",
     "cta_secondary": "테스팅 영상 보기",
     "stats": [
-      { "k": "설계", "v": "장시간 연습 세션" },
-      { "k": "제작", "v": "더위 · 비 · 습기" },
-      { "k": "집중", "v": "하나의 장갑. 제대로." }
+      { "k": "설계", "v": "장시간 연습용" },
+      { "k": "제작", "v": "더위, 비, 습도까지 최적화" },
+      { "k": "집중", "v": "제대로 만든 단 하나의 장갑" }
     ]
   },
   "ribbon": [
@@ -37,7 +37,7 @@
     "num": "02 — 테스팅",
     "title_line1": "실제 테스트.",
     "title_line2": "실제 피드백.",
-    "lede": "드라이빙 레인지, 공장 현장, 땀과 날씨 — 영상이 모든 것을 말해줍니다.",
+    "lede": "Driving ranges, factory floors, sweat and weather — the videos speak for themselves.",
     "season": "시즌 1 — 처음부터 만들어가는 과정",
     "day": "DAY",
     "labels": {
