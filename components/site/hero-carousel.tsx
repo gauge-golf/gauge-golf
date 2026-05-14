@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 // See /public/media/README.md for photographer brief.
 const slides = [
   "/media/gauge-korea.png",
-  // "/media/hero-02.jpg",
+  "/media/gauge-hero-2.png",
   // "/media/hero-03.jpg",
   // "/media/hero-04.jpg",
   // "/media/hero-05.jpg",
