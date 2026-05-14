@@ -28,11 +28,13 @@ export default function Imprint() {
       <H2>Contact</H2>
       <UL>
         <li><strong className="text-white">Email:</strong> <a className="text-gold hover:underline" href="mailto:hello@gauge-golf.com">hello@gauge-golf.com</a> · founder replies personally</li>
-        <li><strong className="text-white">Instagram:</strong> <a className="text-gold hover:underline" href="https://www.instagram.com/gaugegolf" target="_blank" rel="noopener noreferrer">@gaugegolf</a></li>
-        <li><strong className="text-white">YouTube:</strong> <a className="text-gold hover:underline" href="https://www.youtube.com/@gaugegolf" target="_blank" rel="noopener noreferrer">@gaugegolf</a></li>
-        <li><strong className="text-white">TikTok:</strong> <a className="text-gold hover:underline" href="https://www.tiktok.com/@gaugegolf" target="_blank" rel="noopener noreferrer">@gaugegolf</a></li>
+        <li><strong className="text-white">WhatsApp:</strong> <a className="text-gold hover:underline" href="https://wa.me/6281225290989" target="_blank" rel="noopener noreferrer">+62 812 2529 0989</a></li>
+        <li><strong className="text-white">Instagram:</strong> <a className="text-gold hover:underline" href="https://www.instagram.com/kosta_golf" target="_blank" rel="noopener noreferrer">@kosta_golf</a></li>
+        <li><strong className="text-white">YouTube:</strong> <a className="text-gold hover:underline" href="https://youtube.com/@gauge-golf" target="_blank" rel="noopener noreferrer">@gauge-golf</a></li>
+        <li><strong className="text-white">TikTok:</strong> <a className="text-gold hover:underline" href="https://www.tiktok.com/@kazarichuk" target="_blank" rel="noopener noreferrer">@kazarichuk</a></li>
+        <li><strong className="text-white">Facebook:</strong> <a className="text-gold hover:underline" href="https://www.facebook.com/share/18iQdmxpL7/" target="_blank" rel="noopener noreferrer">Konstantin Kazarichuk</a></li>
       </UL>
-      <P>For face-to-face meetings in Seoul or fastest replies, please email first to arrange.</P>
+      <P>For face-to-face meetings in Seoul or fastest replies, please email or WhatsApp first to arrange.</P>
 
       <H2>Hosting</H2>
       <UL>

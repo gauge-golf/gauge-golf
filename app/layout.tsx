@@ -67,10 +67,12 @@ const jsonLd = {
   description:
     "Universal performance golf glove for repetitive practice in heat, rain and all-weather training.",
   sameAs: [
-    "https://www.instagram.com/gaugegolf",
-    "https://www.youtube.com/@gaugegolf",
-    "https://www.tiktok.com/@gaugegolf",
+    "https://www.instagram.com/kosta_golf",
+    "https://youtube.com/@gauge-golf",
+    "https://www.tiktok.com/@kazarichuk",
+    "https://www.facebook.com/share/18iQdmxpL7/",
   ],
+  telephone: "+62-812-2529-0989",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -1,7 +1,7 @@
 import Image from "next/image";
-import { Youtube, Instagram, Mail } from "lucide-react";
+import { Youtube, Instagram, Facebook, Mail, MessageCircle } from "lucide-react";
 
-// TikTok + X (formerly Twitter) inline (lucide TikTok deprecated)
+// TikTok inline (lucide TikTok deprecated)
 function TikTok({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
@@ -9,20 +9,14 @@ function TikTok({ className }: { className?: string }) {
     </svg>
   );
 }
-function X({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
-      <path d="M18.2 3h3l-6.6 7.6L22 21h-6l-4.7-6-5.4 6H3l7-8L2.5 3h6.1l4.2 5.6L18.2 3z" />
-    </svg>
-  );
-}
 
 const socials = [
-  { Icon: Youtube, href: "#", label: "YouTube" },
-  { Icon: TikTok, href: "#", label: "TikTok" },
-  { Icon: Instagram, href: "#", label: "Instagram" },
-  { Icon: X, href: "#", label: "X" },
-  { Icon: Mail, href: "mailto:hello@gauge-golf.com", label: "Email" },
+  { Icon: Youtube,        href: "https://youtube.com/@gauge-golf",        label: "YouTube" },
+  { Icon: Instagram,      href: "https://www.instagram.com/kosta_golf",   label: "Instagram" },
+  { Icon: TikTok,         href: "https://www.tiktok.com/@kazarichuk",     label: "TikTok" },
+  { Icon: Facebook,       href: "https://www.facebook.com/share/18iQdmxpL7/", label: "Facebook" },
+  { Icon: MessageCircle,  href: "https://wa.me/6281225290989",            label: "WhatsApp" },
+  { Icon: Mail,           href: "mailto:hello@gauge-golf.com",            label: "Email" },
 ];
 
 export function Footer() {
@@ -41,11 +35,13 @@ export function Footer() {
             <p className="max-w-[36ch] text-white/60">
               Universal performance golf glove.<br />Built in public.
             </p>
-            <div className="mt-5 flex gap-2.5">
+            <div className="mt-5 flex flex-wrap gap-2.5">
               {socials.map(({ Icon, href, label }) => (
                 <a
                   key={label}
                   href={href}
+                  target={href.startsWith("http") ? "_blank" : undefined}
+                  rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
                   aria-label={label}
                   className="grid size-9 place-items-center rounded-full border border-white/20 text-white transition hover:border-gold hover:text-gold"
                 >
@@ -74,9 +70,10 @@ export function Footer() {
             <h5 className="m-0 mb-3.5 font-mono text-[10px] uppercase tracking-[0.22em] text-white/40">Contact</h5>
             <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
               <li><a href="mailto:hello@gauge-golf.com" className="font-display text-sm font-semibold hover:text-gold">hello@gauge-golf.com</a></li>
-              <li><a href="#" className="font-display text-sm font-semibold hover:text-gold">@gaugegolf · Instagram</a></li>
-              <li><a href="#" className="font-display text-sm font-semibold hover:text-gold">@gaugegolf · TikTok</a></li>
-              <li><a href="#" className="font-display text-sm font-semibold hover:text-gold">/gaugegolf · YouTube</a></li>
+              <li><a href="https://wa.me/6281225290989" target="_blank" rel="noopener noreferrer" className="font-display text-sm font-semibold hover:text-gold">+62 812 2529 0989 · WhatsApp</a></li>
+              <li><a href="https://www.instagram.com/kosta_golf" target="_blank" rel="noopener noreferrer" className="font-display text-sm font-semibold hover:text-gold">@kosta_golf · Instagram</a></li>
+              <li><a href="https://www.tiktok.com/@kazarichuk" target="_blank" rel="noopener noreferrer" className="font-display text-sm font-semibold hover:text-gold">@kazarichuk · TikTok</a></li>
+              <li><a href="https://youtube.com/@gauge-golf" target="_blank" rel="noopener noreferrer" className="font-display text-sm font-semibold hover:text-gold">@gauge-golf · YouTube</a></li>
             </ul>
           </div>
 
