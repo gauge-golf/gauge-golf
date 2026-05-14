@@ -34,6 +34,7 @@ export function Founder({ locale = "en" }: { locale?: Locale }) {
             <p className="m-0 text-[22px] leading-snug md:text-[26px]">
               {t.p1_pre}
               <span className="text-gold">{t.p1_gold}</span>
+              {t.p1_post}
             </p>
             <p className="mt-4 text-base text-white/60">
               {t.p2}
