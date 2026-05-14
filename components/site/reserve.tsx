@@ -10,6 +10,14 @@ const fieldCls =
   "w-full rounded-[6px] border border-white/20 bg-black/35 px-3.5 py-3.5 text-[15px] text-white placeholder:text-white/40 focus:border-gold focus:bg-black/50 focus:outline-none";
 const labelCls = "font-mono text-[10px] uppercase tracking-[0.22em] text-white/40";
 
+const COUNTRIES = [
+  { v: "United States", flag: "🇺🇸", short: "USA" },
+  { v: "South Korea",   flag: "🇰🇷", short: "Korea" },
+  { v: "Japan",         flag: "🇯🇵", short: "Japan" },
+  { v: "Singapore",     flag: "🇸🇬", short: "Singapore" },
+  { v: "Other",         flag: "🌐",  short: "Other" },
+];
+
 export function Reserve() {
   const [state, formAction, pending] = useActionState(reserve, initial);
   const [country, setCountry] = useState("");
@@ -48,28 +56,33 @@ export function Reserve() {
               <Field name="name" label="Name" placeholder="First and last" required autoComplete="name" />
               <Field name="email" label="Email" type="email" placeholder="you@email.com" required autoComplete="email" inputMode="email" />
 
-              {/* Country */}
+              {/* Country — chip selector */}
               <div className="flex flex-col gap-1.5 md:col-span-2">
-                <label htmlFor="f-country" className={labelCls}>Country</label>
-                <select
-                  id="f-country"
-                  name="country"
-                  required
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                  autoComplete="country-name"
-                  className={fieldCls}
-                >
-                  <option value="" disabled>Choose your country</option>
-                  <option value="United States">United States</option>
-                  <option value="South Korea">South Korea</option>
-                  <option value="Japan">Japan</option>
-                  <option value="Singapore">Singapore</option>
-                  <option value="Other">Other (worldwide)</option>
-                </select>
+                <label className={labelCls}>Country</label>
+                <input type="hidden" name="country" value={country} required />
+                <div className="flex flex-wrap gap-2">
+                  {COUNTRIES.map((c) => {
+                    const active = country === c.v;
+                    return (
+                      <button
+                        key={c.v}
+                        type="button"
+                        onClick={() => setCountry(c.v)}
+                        className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-2 font-display text-[12px] font-bold uppercase tracking-[0.12em] transition ${
+                          active
+                            ? "border-gold bg-gold/15 text-gold"
+                            : "border-white/20 bg-black/20 text-white/70 hover:border-white/50"
+                        }`}
+                      >
+                        <span aria-hidden className="text-base leading-none">{c.flag}</span>
+                        {c.short}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
-              {/* Conditional: US state */}
+              {/* Conditional secondary fields */}
               {country === "United States" && (
                 <div className="flex flex-col gap-1.5 md:col-span-2">
                   <label htmlFor="f-state" className={labelCls}>State</label>
@@ -79,45 +92,51 @@ export function Reserve() {
                   </select>
                 </div>
               )}
-
-              {/* Conditional: free-text country */}
               {country === "Other" && (
                 <div className="md:col-span-2">
                   <Field name="state" label="Where are you based?" placeholder="City, country" required />
                 </div>
               )}
 
-              {/* Hand */}
+              {/* Hand + Size — paired row */}
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="f-hand" className={labelCls}>Glove hand</label>
                 <select id="f-hand" name="hand" defaultValue="" className={fieldCls}>
-                  <option value="" disabled>Choose one</option>
-                  <option value="Left">Left (right-handed golfer)</option>
-                  <option value="Right">Right (left-handed golfer)</option>
+                  <option value="" disabled>Choose</option>
+                  <option value="Left">Left</option>
+                  <option value="Right">Right</option>
                   <option value="Both">Both</option>
                   <option value="Not sure">Not sure</option>
                 </select>
               </div>
-
-              {/* Size */}
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="f-size" className={labelCls}>Glove size</label>
                 <select id="f-size" name="glove_size" defaultValue="" className={fieldCls}>
-                  <option value="" disabled>Choose size</option>
+                  <option value="" disabled>Choose</option>
                   <option value="S">S</option>
                   <option value="M">M</option>
                   <option value="ML">ML</option>
                   <option value="L">L</option>
                   <option value="XL">XL</option>
-                  <option value="Not sure">Not sure — recommend me</option>
+                  <option value="Not sure">Not sure</option>
                 </select>
               </div>
 
-              {/* Size reference helper */}
-              <p className="md:col-span-2 -mt-1 font-mono text-[10px] uppercase leading-relaxed tracking-[0.14em] text-white/40">
-                Size reference · S ≈ KR 19–21 / JP 21–22 · M ≈ KR 21–23 / JP 22–23 · ML ≈ KR 23–25 / JP 23–24 / US M–L · L ≈ KR 25–26 / JP 24–25 · XL ≈ KR 26+ / JP 25+
-              </p>
+              {/* Size guide — on-demand */}
+              <details className="md:col-span-2 -mt-1">
+                <summary className="cursor-pointer select-none font-mono text-[10px] uppercase tracking-[0.16em] text-white/50 hover:text-gold">
+                  Need help with size?
+                </summary>
+                <div className="mt-2 rounded-[6px] border border-white/10 bg-black/30 p-3 font-mono text-[10px] uppercase leading-relaxed tracking-[0.12em] text-white/55">
+                  <div>S &nbsp; · &nbsp; KR 19–21 &nbsp; · &nbsp; JP 21–22</div>
+                  <div>M &nbsp; · &nbsp; KR 21–23 &nbsp; · &nbsp; JP 22–23</div>
+                  <div>ML · &nbsp; KR 23–25 &nbsp; · &nbsp; JP 23–24 · US M–L</div>
+                  <div>L &nbsp; · &nbsp; KR 25–26 &nbsp; · &nbsp; JP 24–25</div>
+                  <div>XL · &nbsp; KR 26+ &nbsp; &nbsp;&nbsp; · &nbsp; JP 25+</div>
+                </div>
+              </details>
 
+              {/* Optional details */}
               <details className="md:col-span-2">
                 <summary className="cursor-pointer select-none font-mono text-[11px] uppercase tracking-[0.16em] text-white/60 hover:text-gold">
                   + Add details (optional)
