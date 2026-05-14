@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { reserve, type ReserveState } from "@/app/actions";
 
@@ -12,6 +12,7 @@ const labelCls = "font-mono text-[10px] uppercase tracking-[0.22em] text-white/4
 
 export function Reserve() {
   const [state, formAction, pending] = useActionState(reserve, initial);
+  const [country, setCountry] = useState("");
 
   return (
     <section id="access" className="border-t border-white/10 py-20 md:py-32">
@@ -28,10 +29,14 @@ export function Reserve() {
             </p>
           </div>
 
-          {/* Form */}
+          {/* Form / success */}
           {state.ok ? (
             <div className="grid place-items-center rounded-[10px] border border-gold bg-gold/[0.06] p-8 text-center">
               <div>
+                <div className="mb-3 inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-gold">
+                  <span className="size-1.5 animate-pulse-gold rounded-full bg-gold" />
+                  <span>Confirmed</span>
+                </div>
                 <h4 className="m-0 mb-2 font-display text-2xl font-bold text-gold">You&apos;re on the list.</h4>
                 <p className="m-0 max-w-[40ch] text-sm text-white/60">
                   You&apos;ll receive future updates and first-batch access information directly from Konstantin.
@@ -42,12 +47,76 @@ export function Reserve() {
             <form action={formAction} className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
               <Field name="name" label="Name" placeholder="First and last" required autoComplete="name" />
               <Field name="email" label="Email" type="email" placeholder="you@email.com" required autoComplete="email" inputMode="email" />
-              <div className="md:col-span-2">
-                <Field name="country" label="Country" placeholder="Start typing…" required autoComplete="country-name" list="countries" />
-                <datalist id="countries">
-                  {COUNTRIES.map((c) => <option key={c} value={c} />)}
-                </datalist>
+
+              {/* Country */}
+              <div className="flex flex-col gap-1.5 md:col-span-2">
+                <label htmlFor="f-country" className={labelCls}>Country</label>
+                <select
+                  id="f-country"
+                  name="country"
+                  required
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  autoComplete="country-name"
+                  className={fieldCls}
+                >
+                  <option value="" disabled>Choose your country</option>
+                  <option value="United States">United States</option>
+                  <option value="South Korea">South Korea</option>
+                  <option value="Japan">Japan</option>
+                  <option value="Singapore">Singapore</option>
+                  <option value="Other">Other (worldwide)</option>
+                </select>
               </div>
+
+              {/* Conditional: US state */}
+              {country === "United States" && (
+                <div className="flex flex-col gap-1.5 md:col-span-2">
+                  <label htmlFor="f-state" className={labelCls}>State</label>
+                  <select id="f-state" name="state" required defaultValue="" className={fieldCls}>
+                    <option value="" disabled>Choose your state</option>
+                    {US_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+              )}
+
+              {/* Conditional: free-text country */}
+              {country === "Other" && (
+                <div className="md:col-span-2">
+                  <Field name="state" label="Where are you based?" placeholder="City, country" required />
+                </div>
+              )}
+
+              {/* Hand */}
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="f-hand" className={labelCls}>Glove hand</label>
+                <select id="f-hand" name="hand" defaultValue="" className={fieldCls}>
+                  <option value="" disabled>Choose one</option>
+                  <option value="Left">Left (right-handed golfer)</option>
+                  <option value="Right">Right (left-handed golfer)</option>
+                  <option value="Both">Both</option>
+                  <option value="Not sure">Not sure</option>
+                </select>
+              </div>
+
+              {/* Size */}
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="f-size" className={labelCls}>Glove size</label>
+                <select id="f-size" name="glove_size" defaultValue="" className={fieldCls}>
+                  <option value="" disabled>Choose size</option>
+                  <option value="S">S</option>
+                  <option value="M">M</option>
+                  <option value="ML">ML</option>
+                  <option value="L">L</option>
+                  <option value="XL">XL</option>
+                  <option value="Not sure">Not sure — recommend me</option>
+                </select>
+              </div>
+
+              {/* Size reference helper */}
+              <p className="md:col-span-2 -mt-1 font-mono text-[10px] uppercase leading-relaxed tracking-[0.14em] text-white/40">
+                Size reference · S ≈ KR 19–21 / JP 21–22 · M ≈ KR 21–23 / JP 22–23 · ML ≈ KR 23–25 / JP 23–24 / US M–L · L ≈ KR 25–26 / JP 24–25 · XL ≈ KR 26+ / JP 25+
+              </p>
 
               <details className="md:col-span-2">
                 <summary className="cursor-pointer select-none font-mono text-[11px] uppercase tracking-[0.16em] text-white/60 hover:text-gold">
@@ -112,12 +181,11 @@ export function Reserve() {
 }
 
 function Field({
-  name, label, type = "text", placeholder, required, optional, autoComplete, inputMode, list,
+  name, label, type = "text", placeholder, required, optional, autoComplete, inputMode,
 }: {
   name: string; label: string; type?: string; placeholder?: string;
   required?: boolean; optional?: boolean;
   autoComplete?: string; inputMode?: "text" | "email" | "tel" | "numeric" | "url" | "search";
-  list?: string;
 }) {
   const id = `f-${name}`;
   return (
@@ -134,20 +202,19 @@ function Field({
         required={required}
         autoComplete={autoComplete}
         inputMode={inputMode}
-        list={list}
         className={fieldCls}
       />
     </div>
   );
 }
 
-// Common golf-playing markets first, then big shipping markets.
-const COUNTRIES = [
-  "United States", "United Kingdom", "Canada", "Australia", "Ireland",
-  "South Korea", "Japan", "China", "Hong Kong", "Taiwan", "Singapore",
-  "Thailand", "Vietnam", "Indonesia", "Philippines", "Malaysia", "India",
-  "Germany", "France", "Spain", "Italy", "Netherlands", "Sweden", "Norway",
-  "Denmark", "Finland", "Switzerland", "Austria", "Belgium", "Portugal",
-  "Poland", "Czechia", "Greece", "Turkey", "UAE", "Saudi Arabia", "Qatar",
-  "South Africa", "New Zealand", "Mexico", "Brazil", "Argentina", "Chile",
+const US_STATES = [
+  "Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut",
+  "Delaware","Florida","Georgia","Hawaii","Idaho","Illinois","Indiana","Iowa",
+  "Kansas","Kentucky","Louisiana","Maine","Maryland","Massachusetts","Michigan",
+  "Minnesota","Mississippi","Missouri","Montana","Nebraska","Nevada","New Hampshire",
+  "New Jersey","New Mexico","New York","North Carolina","North Dakota","Ohio",
+  "Oklahoma","Oregon","Pennsylvania","Rhode Island","South Carolina","South Dakota",
+  "Tennessee","Texas","Utah","Vermont","Virginia","Washington","West Virginia",
+  "Wisconsin","Wyoming","Washington DC",
 ];
