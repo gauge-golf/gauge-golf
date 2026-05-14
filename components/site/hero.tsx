@@ -1,4 +1,5 @@
 import { ArrowRight, Play } from "lucide-react";
+import { HeroCarousel } from "./hero-carousel";
 
 export function Hero() {
   return (
@@ -58,32 +59,19 @@ export function Hero() {
           </div>
         </div>
 
-        {/* RIGHT — media slot. Drop a file at /public/media/hero.mp4 (and /media/hero.jpg as poster) to fill it. */}
-        <div className="relative min-h-[420px] overflow-hidden rounded-[18px] border border-white/20 bg-[radial-gradient(120%_90%_at_60%_30%,rgba(241,192,78,0.10),transparent_60%),linear-gradient(180deg,#0B2230,#061722)] lg:min-h-0 [aspect-ratio:4/5] lg:[aspect-ratio:auto]">
-          <div className="absolute inset-0 bg-[repeating-linear-gradient(135deg,rgba(255,255,255,.03)_0_2px,transparent_2px_10px),radial-gradient(80%_60%_at_50%_40%,rgba(255,255,255,.05),transparent_70%)]" />
+        {/* RIGHT — photo carousel. Drop /public/media/hero-01.jpg … hero-05.jpg (4:5, see README). */}
+        <div className="relative aspect-[4/5] overflow-hidden rounded-[18px] border border-white/20 bg-[linear-gradient(180deg,#0B2230,#061722)]">
+          <HeroCarousel />
 
-          <video
-            className="absolute inset-0 size-full object-cover"
-            src="/media/hero.mp4"
-            poster="/media/hero.jpg"
-            autoPlay muted loop playsInline preload="metadata"
-          />
-
+          {/* Subtle corner brackets — decorative only, in corners, never overlap the subject */}
           {[
             ["tl", "top-3 left-3 border-r-0 border-b-0"],
             ["tr", "top-3 right-3 border-l-0 border-b-0"],
             ["bl", "bottom-3 left-3 border-r-0 border-t-0"],
             ["br", "bottom-3 right-3 border-l-0 border-t-0"],
           ].map(([k, c]) => (
-            <span key={k} className={`absolute size-3.5 border border-white/40 ${c}`} />
+            <span key={k} className={`pointer-events-none absolute size-3.5 border border-white/30 ${c}`} />
           ))}
-
-          <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between gap-3 p-4.5">
-            <span className="rounded border border-white/20 bg-black/40 px-2 py-1.5 font-mono text-[10px] uppercase tracking-[0.22em] backdrop-blur">REC · FIELD TEST</span>
-            <span className="rounded border border-gold/50 bg-black/40 px-2 py-1.5 font-mono text-[10px] uppercase tracking-[0.22em] text-gold backdrop-blur">
-              GAUGE · 한국 · 中国
-            </span>
-          </div>
         </div>
       </div>
     </section>
