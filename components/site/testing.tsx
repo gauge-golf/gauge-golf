@@ -8,6 +8,7 @@ type Tile =
       day: number;
       location: string;
       youtubeId: string;
+      poster?: string; // optional 9:16 custom cover; falls back to YouTube thumb
     }
   | {
       kind: "soon";
@@ -23,9 +24,9 @@ const tiles: Tile[] = [
   { kind: "video", label: "Wedge Practice",      day: 15, location: "Range",      youtubeId: "IFe9rSKUVsw" },
   { kind: "video", label: "Sweat Problem",       day: 21, location: "+30°C",      youtubeId: "n3wvTMAaLq8" },
   { kind: "video", label: "PGA Academy",         day: 22, location: "PGA",        youtubeId: "rxMDiEfzUqY" },
-  { kind: "video", label: "Arrived in China",    day: 32, location: "China",      youtubeId: "5rsgDNElkIo" },
+  { kind: "video", label: "Arrived in China",    day: 32, location: "China",      youtubeId: "5rsgDNElkIo", poster: "/media/gauge-post-03.png" },
   { kind: "video", label: "To the Factory",      day: 36, location: "Guangzhou",  youtubeId: "coDPuHp1z5U" },
-  { kind: "video", label: "Material Selection",  day: 42, location: "Factory",    youtubeId: "gPjv741sCns" },
+  { kind: "video", label: "Material Selection",  day: 42, location: "Factory",    youtubeId: "gPjv741sCns", poster: "/media/gauge-post-01.png" },
   { kind: "soon",  label: "First Sample",        hint: "Coming soon" },
   { kind: "soon",  label: "Field Testing",       hint: "Coming soon" },
   { kind: "soon",  label: "Production",          hint: "Coming soon" },
@@ -65,10 +66,11 @@ function VideoCard({
   day,
   location,
   youtubeId,
+  poster,
 }: Extract<Tile, { kind: "video" }>) {
   return (
-    <figure className="group relative aspect-[9/14] overflow-hidden rounded-[10px] border border-white/10 bg-black">
-      <LiteYouTube id={youtubeId} title={`Day ${day} — ${label}`} />
+    <figure className="group relative aspect-[9/16] overflow-hidden rounded-[10px] border border-white/10 bg-black">
+      <LiteYouTube id={youtubeId} title={`Day ${day} — ${label}`} posterOverride={poster} />
 
       {/* Top-right: Day chip */}
       <div className="pointer-events-none absolute right-2.5 top-2.5 rounded border border-gold/50 bg-black/60 px-1.5 py-1 font-mono text-[9px] uppercase tracking-[0.18em] text-gold backdrop-blur">
@@ -92,7 +94,7 @@ function VideoCard({
 
 function SoonCard({ label, hint }: Extract<Tile, { kind: "soon" }>) {
   return (
-    <figure className="relative aspect-[9/14] overflow-hidden rounded-[10px] border border-dashed border-white/15 bg-[repeating-linear-gradient(135deg,rgba(255,255,255,.025)_0_2px,transparent_2px_12px),linear-gradient(180deg,#0c1c28,#06121b)]">
+    <figure className="relative aspect-[9/16] overflow-hidden rounded-[10px] border border-dashed border-white/15 bg-[repeating-linear-gradient(135deg,rgba(255,255,255,.025)_0_2px,transparent_2px_12px),linear-gradient(180deg,#0c1c28,#06121b)]">
       <div className="absolute inset-0 grid place-items-center p-4 text-center">
         <div>
           <div className="mx-auto mb-3 grid size-10 place-items-center rounded-full border border-white/20 bg-black/40">
