@@ -8,13 +8,13 @@
     "lang_aria": "언어 변경"
   },
   "hero": {
-    "eyebrow": "모든 과정을, 공개합니다",
+    "eyebrow": "모든 과정 공개",
     "title_line1": "하나의 장갑.",
     "title_line2_pre": "",
-    "title_line2_gold": "모든 환경.",
-    "sub": "손이 아플 때까지, 연습하는 골퍼를 위하여.",
+    "title_line2_gold": "모든 상황.",
+    "sub": "손에 물집 잡힐 때까지 연습하는 골퍼들을 위해.",
     "cta_primary": "사전 예약하기",
-    "cta_secondary": "테스팅 영상 보기",
+    "cta_secondary": "테스트 영상 보러가기",
     "stats": [
       { "k": "설계", "v": "장시간 연습용" },
       { "k": "제작", "v": "더위, 비, 습도까지 최적화" },
