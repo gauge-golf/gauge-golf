@@ -101,10 +101,10 @@
     "title_line2": "STANDS FOR.",
     "lede": "반복되는 연습과 다양한 날씨 환경 속에서도 실제로 매일 스윙하는 골퍼를 위해 만든 장갑입니다.",
     "items": [
-      { "v": "400", "d": "한 세션 스윙 수" },
-      { "v": "올웨더", "d": "더위 · 비 · 습기" },
-      { "v": "파운더 주도", "d": "독립적인 제품 제작" },
-      { "v": "하나의 제품", "d": "처음부터 제대로" }
+      { "v": "400", "d": "한번 연습당 스윙" },
+      { "v": "All-Weather", "d": "더위 · 비 · 습한 환경까지 고려한 설계" },
+      { "v": "Founder-Led", "d": "직접 테스트하며 완성한 제품" },
+      { "v": "One Product", "d": "처음부터 제대로 만든 제품" }
     ]
   },
   "reserve": {
@@ -155,16 +155,16 @@
   },
   "faq": {
     "num": "07 — FAQ",
-    "title_line1": "솔직한",
-    "title_line2": "답변.",
-    "lede_pre": "파운더가 직접 운영하는 프로젝트입니다. 궁금한 점이 있다면 — ",
-    "lede_post": " 으로 문의해 주세요.",
+    "title_line1": "Straight",
+    "title_line2": "answers.",
+    "lede_pre": "Founder-led project. Ask anything missing — ",
+    "lede_post": ".",
     "items": [
-      { "q": "지금 바로 구매할 수 있나요?", "a": "현재 첫 생산 배치를 앞두고, 초기 샘플을 테스트하는 단계입니다." },
-      { "q": "주문은 어떻게 진행되나요?", "a": "현재는 이메일과 소셜 미디어를 통해 직접 처리하고 있습니다." },
-      { "q": "해외 배송이 가능한가요?", "a": "네. 첫 생산 배치부터 해외 배송이 가능합니다." },
-      { "q": "왜 제품이 하나뿐인가요?", "a": "Gauge Golf는 먼저 하나의 완성된 장갑을 만드는 데 집중하고 있습니다." },
-      { "q": "회사인가요?", "a": "Gauge Golf는 현재 파운더가 직접 운영하는 독립 프로젝트입니다." }
+      { "q": "Is the glove available now?", "a": "Early samples are currently being tested before the first production batch release." },
+      { "q": "How do orders work?", "a": "Early requests are currently handled directly through email and social media." },
+      { "q": "Do you ship internationally?", "a": "Yes. International shipping will be available for the first production batch." },
+      { "q": "Why only one product?", "a": "Gauge Golf is focused on building one great glove first." },
+      { "q": "Is this a company?", "a": "Gauge Golf is currently an independent founder-led project." }
     ]
   },
   "footer": {
