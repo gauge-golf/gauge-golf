@@ -58,7 +58,7 @@ export function Hero({ locale = "en" }: { locale?: Locale }) {
         </div>
 
         {/* RIGHT — photo carousel. Drop /public/media/hero-01.jpg … hero-05.jpg (4:5, see README). */}
-        <div className="relative aspect-[4/5] overflow-hidden rounded-[18px] border border-white/20 bg-[linear-gradient(180deg,#0B2230,#061722)]">
+        <div className="relative aspect-[4/5] overflow-hidden rounded-[18px] border border-white/20">
           <HeroCarousel />
 
           {/* Subtle corner brackets — decorative only, in corners, never overlap the subject */}
