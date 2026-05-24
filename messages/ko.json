@@ -167,7 +167,11 @@
       { "q": "How do orders work?", "a": "Early requests are currently handled directly through email and social media." },
       { "q": "Do you ship internationally?", "a": "Yes. International shipping will be available for the first production batch." },
       { "q": "Why only one product?", "a": "Gauge Golf is focused on building one great glove first." },
-      { "q": "Is this a company?", "a": "Gauge Golf is currently an independent founder-led project." }
+      { "q": "Is this a company?", "a": "Gauge Golf is currently an independent founder-led project." },
+      { "q": "코스에서도 사용할 수 있나요?", "a": "네 — Gauge Golf는 연습, 레인지, 시뮬레이터 골프, 그리고 일반 라운드를 위해 만들어졌습니다. 많은 골퍼들이 퇴근 후 연습이나 비공식 라운드에서 서포트 장비를 사용합니다." },
+      { "q": "대회에서 사용할 수 있나요?", "a": "Gauge Golf는 주로 연습용 골프 장갑으로 설계되었습니다. 공식 대회, 예선전, 또는 핸디캡 기록 라운드의 경우 장비 사용은 대회 위원회가 결정합니다. 공식 경기에서 사용하실 계획이라면 경기 전에 위원회에 확인하시는 것을 권장합니다." },
+      { "q": "스윙을 교정하거나 슬라이스를 고쳐주나요?", "a": "아니요. 클럽을 대신 휘두르거나 슬라이스를 자동으로 고쳐주지 않습니다. 이 장갑은 반복 연습 중 더 안정적인 느낌, 일관된 그립감, 그리고 손목 인지력을 제공하도록 설계되었습니다." },
+      { "q": "이 장갑은 누구를 위한 제품인가요?", "a": "Gauge Golf는 자주 연습하는 골퍼들을 위한 제품입니다 — 레인지 플레이어, 시뮬레이터 골퍼, 입문자, 중급 핸디캡 플레이어, 그리고 더위, 비, 습도 속에서 장시간 연습할 때 더 안정적인 그립감을 원하는 모든 골퍼를 위해 만들어졌습니다." }
     ]
   },
   "footer": {

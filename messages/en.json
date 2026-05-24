@@ -167,7 +167,11 @@
       { "q": "How do orders work?", "a": "Early requests are currently handled directly through email and social media." },
       { "q": "Do you ship internationally?", "a": "Yes. International shipping will be available for the first production batch." },
       { "q": "Why only one product?", "a": "Gauge Golf is focused on building one great glove first." },
-      { "q": "Is this a company?", "a": "Gauge Golf is currently an independent founder-led project." }
+      { "q": "Is this a company?", "a": "Gauge Golf is currently an independent founder-led project." },
+      { "q": "Can I use it on the course?", "a": "Yes — Gauge Golf is built for practice, range sessions, simulator golf and recreational rounds. Many golfers use supportive gear during casual play, especially when training after work or playing non-tournament rounds." },
+      { "q": "Is it tournament legal?", "a": "Gauge Golf is designed primarily as a practice-first golf glove. For official tournaments, qualifiers or handicap-posted competitive rounds, equipment decisions are made by the event committee. If you plan to use it in a formal competition, we recommend checking with the committee before play." },
+      { "q": "Does it fix my swing or cure a slice?", "a": "No. It does not swing the club for you or automatically fix a slice. The glove is designed to give a more stable feel, better grip consistency and wrist awareness during repetitive practice." },
+      { "q": "Who is this glove for?", "a": "Gauge Golf is for golfers who practice often — range players, simulator golfers, beginners, mid-handicap players and anyone who wants a more stable grip feel during long sessions in heat, rain or humidity." }
     ]
   },
   "footer": {
