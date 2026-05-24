@@ -6,9 +6,8 @@ import { useEffect, useState } from "react";
 // Drop your 4:5 photos here. Order = display order. Carousel auto-adapts to count.
 // See /public/media/README.md for photographer brief.
 const slides = [
-  "/media/gauge-korea.png",
-  "/media/gauge-hero-2.png",
-  "/media/gauge-design-glove.png",
+  "/media/gauge-glove-v3.jpeg",
+  "/media/gauge-glove-v3-girl.jpeg",
   // "/media/hero-04.jpg",
   // "/media/hero-05.jpg",
 ];
