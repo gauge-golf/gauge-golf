@@ -18,7 +18,7 @@ export function Blueprint({ locale = "en" }: { locale?: Locale }) {
           {/* Product image — 4:5, matches Hero / Founder slots. No text overlays (labels are on the image itself). */}
           <div className="relative aspect-[4/5] overflow-hidden rounded-[18px] border border-white/20 bg-[linear-gradient(180deg,#0B2230,#061722)]">
             <Image
-              src="/media/gauge-glove-v3-black.jpeg"
+              src="/media/gauge-glove-v3-black.png"
               alt="Gauge Golf glove — wrist stability, grip pattern, microfiber construction"
               fill
               sizes="(max-width: 1024px) 100vw, 55vw"
