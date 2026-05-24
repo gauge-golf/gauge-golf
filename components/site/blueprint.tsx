@@ -23,7 +23,7 @@ export function Blueprint({ locale = "en" }: { locale?: Locale }) {
               fill
               sizes="(max-width: 1024px) 100vw, 55vw"
               quality={75}
-              className="object-cover"
+              className="object-contain"
             />
 
             {/* Corner brackets — decorative, in corners only */}

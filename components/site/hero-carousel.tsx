@@ -50,7 +50,7 @@ export function HeroCarousel() {
             sizes="(max-width: 1024px) 100vw, 50vw"
             priority={idx === 0}
             quality={75}
-            className="object-cover"
+            className="object-contain"
           />
         </div>
       ))}
