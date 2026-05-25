@@ -20,24 +20,41 @@ const SITE_URL = "https://gauge-golf.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: "Gauge Golf — One Glove. Every Condition.",
+  title: {
+    default: "Gauge Golf — One Glove. Every Condition.",
+    template: "%s | Gauge Golf"
+  },
   description:
-    "A universal performance golf glove designed for grip, wrist stability and long practice sessions in heat, rain and all-weather training.",
+    "A universal performance golf glove designed for grip, wrist stability and long practice sessions in heat, rain and all-weather training. Built in public by founder Konstantin Kazarichuk.",
   keywords: [
     "golf glove",
     "performance golf glove",
     "all-weather golf glove",
     "driving range glove",
     "wrist stability glove",
+    "practice golf glove",
+    "simulator golf glove",
     "Gauge Golf",
+    "golf training equipment",
   ],
+  authors: [{ name: "Konstantin Kazarichuk" }],
+  creator: "Konstantin Kazarichuk",
+  publisher: "Gauge Golf",
   alternates: { canonical: "/" },
+  icons: {
+    icon: [
+      { url: "/media/favicon.ico", sizes: "any" },
+      { url: "/media/GAUGE-LOGO.svg", type: "image/svg+xml" },
+    ],
+    apple: "/media/GAUGE-LOGO.svg",
+  },
   openGraph: {
     title: "Gauge Golf — One Glove. Every Condition.",
     description: "Universal performance golf glove. Built in public.",
     type: "website",
     url: SITE_URL,
     siteName: "Gauge Golf",
+    locale: "en_US",
     images: [{ url: "/og.jpg", width: 1200, height: 630, alt: "Gauge Golf" }],
   },
   twitter: {
@@ -45,8 +62,12 @@ export const metadata: Metadata = {
     title: "Gauge Golf — One Glove. Every Condition.",
     description: "Universal performance golf glove. Built in public.",
     images: ["/og.jpg"],
+    creator: "@kosta_golf",
   },
   robots: { index: true, follow: true },
+  verification: {
+    google: "add-your-google-search-console-code-here",
+  },
 };
 
 export const viewport: Viewport = {
