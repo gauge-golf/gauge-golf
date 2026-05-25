@@ -51,6 +51,7 @@ export function HeroCarousel() {
             priority={idx === 0}
             quality={75}
             className="object-contain"
+            style={{ filter: 'drop-shadow(0 20px 40px rgba(0, 0, 0, 0.4)) drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3))' }}
           />
           {/* Waiting List label */}
           <div className="pointer-events-none absolute right-3 top-3 rounded border border-gold/60 bg-black/60 px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-gold backdrop-blur">

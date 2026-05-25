@@ -24,6 +24,7 @@ export function Blueprint({ locale = "en" }: { locale?: Locale }) {
               sizes="(max-width: 1024px) 100vw, 55vw"
               quality={75}
               className="object-contain"
+              style={{ filter: 'drop-shadow(0 20px 40px rgba(0, 0, 0, 0.4)) drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3))' }}
             />
 
             {/* Waiting List label */}
