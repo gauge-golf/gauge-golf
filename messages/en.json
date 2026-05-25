@@ -79,7 +79,16 @@
       { "h": "Reinforced Palm", "p": "Built for high-volume driving range practice." },
       { "h": "Microfiber Construction", "p": "Soft feel with improved durability." },
       { "h": "Universal Conditions", "p": "Designed for indoor, outdoor, humid and wet environments." }
-    ]
+    ],
+    "materials": {
+      "title": "Materials",
+      "items": [
+        { "label": "Palm", "value": "100% Polyester" },
+        { "label": "Backhand", "value": "50% Nylon / 50% Polyester" },
+        { "label": "Wrist Strap", "value": "Elastic Synthetic Material" },
+        { "label": "Lining", "value": "No Lining" }
+      ]
+    }
   },
   "founder": {
     "num": "04 — The Founder",

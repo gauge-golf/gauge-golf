@@ -55,6 +55,21 @@ export function Blueprint({ locale = "en" }: { locale?: Locale }) {
                 </div>
               );
             })}
+
+            {/* Materials */}
+            {t.materials && (
+              <div className="mt-6 rounded-[10px] border border-white/10 bg-white/[0.015] p-4.5">
+                <h4 className="m-0 mb-3 font-mono text-[11px] uppercase tracking-[0.18em] text-gold">{t.materials.title}</h4>
+                <div className="grid gap-2.5 font-mono text-[11px] tracking-[0.08em]">
+                  {t.materials.items.map((item: { label: string; value: string }, idx: number) => (
+                    <div key={idx} className="grid grid-cols-[auto_1fr] gap-3">
+                      <div className="text-white/50">{item.label}</div>
+                      <div className="text-white/80">{item.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
