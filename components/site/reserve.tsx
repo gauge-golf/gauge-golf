@@ -148,8 +148,7 @@ export function Reserve({ locale = "en" }: { locale?: Locale }) {
               {/* Optional details */}
               <details className="md:col-span-2">
                 <summary className="cursor-pointer select-none font-mono text-[11px] uppercase tracking-[0.16em] text-white/40 hover:text-white/70 transition-colors">
-                  ▼
-                  {t.details_more}
+                  ▼ {t.details_more}
                 </summary>
                 <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
                   <Field name="social" label={t.f_social} optional optionalLabel={t.optional} placeholder={t.f_social_ph} autoComplete="username" />
