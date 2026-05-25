@@ -129,12 +129,19 @@ export function Reserve({ locale = "en" }: { locale?: Locale }) {
                 <summary className="cursor-pointer select-none font-mono text-[11px] uppercase tracking-[0.16em] text-white/40 hover:text-white/70 transition-colors">
                   ▼ {t.size_help}
                 </summary>
-                <div className="mt-3 rounded-[8px] border border-white/10 bg-black/20 p-4 font-mono text-[11px] leading-relaxed tracking-[0.10em] text-white/50">
-                  <div>S &nbsp; · &nbsp; KR 19–21 &nbsp; · &nbsp; JP 21–22</div>
-                  <div>M &nbsp; · &nbsp; KR 21–23 &nbsp; · &nbsp; JP 22–23</div>
-                  <div>ML · &nbsp; KR 23–25 &nbsp; · &nbsp; JP 23–24 · US M–L</div>
-                  <div>L &nbsp; · &nbsp; KR 25–26 &nbsp; · &nbsp; JP 24–25</div>
-                  <div>XL · &nbsp; KR 26+ &nbsp; &nbsp;&nbsp; · &nbsp; JP 25+</div>
+                <div className="mt-3 rounded-[8px] border border-white/10 bg-black/20 p-4 font-mono text-[11px] tracking-[0.08em] text-white/50">
+                  <div className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2">
+                    <div className="text-white/70">S</div>
+                    <div>KR 19–21 · JP 21–22</div>
+                    <div className="text-white/70">M</div>
+                    <div>KR 21–23 · JP 22–23</div>
+                    <div className="text-white/70">ML</div>
+                    <div>KR 23–25 · JP 23–24 · US M–L</div>
+                    <div className="text-white/70">L</div>
+                    <div>KR 25–26 · JP 24–25</div>
+                    <div className="text-white/70">XL</div>
+                    <div>KR 26+ · JP 25+</div>
+                  </div>
                 </div>
               </details>
 
