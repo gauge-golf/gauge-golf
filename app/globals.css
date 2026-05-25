@@ -69,8 +69,17 @@ html[lang="ko"] .font-mono {
 .animate-marquee { animation: marquee 38s linear infinite; }
 
 /* Hide default disclosure triangle on details/summary */
-details summary::-webkit-details-marker { display: none; }
-details summary::marker { display: none; }
+details summary {
+  list-style: none;
+  display: block;
+}
+details summary::-webkit-details-marker {
+  display: none;
+}
+details summary::marker {
+  display: none;
+  content: '';
+}
 
 /* Select dropdown spacing - add extra right padding for chevron */
 select {
