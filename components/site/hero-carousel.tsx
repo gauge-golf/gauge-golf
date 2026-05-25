@@ -12,7 +12,7 @@ const slides = [
   // "/media/hero-05.jpg",
 ];
 
-const INTERVAL_MS = 4500;
+const INTERVAL_MS = 5000;
 
 export function HeroCarousel() {
   const [i, setI] = useState(0);
@@ -40,7 +40,7 @@ export function HeroCarousel() {
         <div
           key={src}
           aria-hidden={idx !== i}
-          className="absolute inset-0 transition-opacity duration-[900ms] ease-out"
+          className="absolute inset-0 transition-opacity duration-[1200ms] ease-in-out"
           style={{ opacity: idx === i ? 1 : 0 }}
         >
           <Image
