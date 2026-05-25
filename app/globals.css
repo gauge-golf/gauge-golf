@@ -71,3 +71,9 @@ html[lang="ko"] .font-mono {
 /* Hide default disclosure triangle on details/summary */
 details summary::-webkit-details-marker { display: none; }
 details summary::marker { display: none; }
+
+/* Select dropdown spacing - add extra right padding for chevron */
+select {
+  padding-right: 2.5rem !important;
+  background-position: right 1rem center;
+}
