@@ -83,6 +83,9 @@ details summary::marker {
 
 /* Select dropdown spacing - add extra right padding for chevron */
 select {
-  padding-right: 2.5rem !important;
-  background-position: right 1rem center;
+  padding-right: 3rem !important;
+  background-position: right 1.25rem center;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
 }
