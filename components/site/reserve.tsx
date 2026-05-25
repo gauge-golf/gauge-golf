@@ -201,6 +201,33 @@ export function Reserve({ locale = "en" }: { locale?: Locale }) {
                   {state.message}
                 </p>
               )}
+
+              {/* Trust badges */}
+              <div className="md:col-span-2 mt-6 pt-6 border-t border-white/10">
+                <div className="flex flex-wrap items-center gap-x-8 gap-y-4 text-white/40">
+                  {/* Founder tested */}
+                  <div className="flex items-center gap-2">
+                    <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="font-mono text-[10px] uppercase tracking-[0.14em]">{t.trust_tested}</span>
+                  </div>
+                  {/* No payment yet */}
+                  <div className="flex items-center gap-2">
+                    <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <span className="font-mono text-[10px] uppercase tracking-[0.14em]">{t.trust_no_payment}</span>
+                  </div>
+                  {/* Payment methods coming */}
+                  <div className="flex items-center gap-2">
+                    <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                    <span className="font-mono text-[10px] uppercase tracking-[0.14em]">{t.trust_payment_soon}</span>
+                  </div>
+                </div>
+              </div>
             </form>
           )}
         </div>

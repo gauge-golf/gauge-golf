@@ -157,6 +157,9 @@
     "sending": "Sending…",
     "submit": "Reserve a Pair",
     "no_spam": "No spam · Founder replies directly",
+    "trust_tested": "Founder tested & verified",
+    "trust_no_payment": "No payment required",
+    "trust_payment_soon": "Stripe & PayPal coming soon",
     "country": {
       "us": "USA",
       "kr": "Korea",

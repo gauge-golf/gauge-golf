@@ -157,6 +157,9 @@
     "sending": "전송 중…",
     "submit": "사전 예약하기",
     "no_spam": "스팸 없음 · 파운더가 직접 답변드립니다",
+    "trust_tested": "파운더 직접 테스트 및 검증",
+    "trust_no_payment": "결제 불필요",
+    "trust_payment_soon": "Stripe & PayPal 곧 지원 예정",
     "country": {
       "us": "미국",
       "kr": "한국",
