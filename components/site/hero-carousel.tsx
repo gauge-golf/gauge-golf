@@ -52,6 +52,10 @@ export function HeroCarousel() {
             quality={75}
             className="object-contain"
           />
+          {/* Waiting List label */}
+          <div className="pointer-events-none absolute right-3 top-3 rounded border border-gold/60 bg-black/60 px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-gold backdrop-blur">
+            Waiting List Only
+          </div>
         </div>
       ))}
 
