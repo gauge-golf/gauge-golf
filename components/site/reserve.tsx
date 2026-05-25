@@ -8,8 +8,8 @@ import { getMessages, type Locale } from "@/lib/i18n";
 const initial: ReserveState = { ok: false, message: "" };
 
 const fieldCls =
-  "w-full rounded-[6px] border border-white/20 bg-black/35 px-3.5 py-3.5 text-[15px] text-white placeholder:text-white/40 focus:border-gold focus:bg-black/50 focus:outline-none";
-const labelCls = "font-mono text-[10px] uppercase tracking-[0.22em] text-white/40";
+  "w-full rounded-[8px] border border-white/15 bg-black/20 px-4 py-3.5 text-[15px] text-white placeholder:text-white/30 focus:border-white/40 focus:bg-black/30 focus:outline-none transition-colors";
+const labelCls = "mb-2 font-mono text-[11px] uppercase tracking-[0.20em] text-white/50";
 
 export function Reserve({ locale = "en" }: { locale?: Locale }) {
   const t = getMessages(locale).reserve;
@@ -54,12 +54,12 @@ export function Reserve({ locale = "en" }: { locale?: Locale }) {
               </div>
             </div>
           ) : (
-            <form action={formAction} className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
+            <form action={formAction} className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <Field name="name" label={t.f_name} placeholder={t.f_name_ph} required autoComplete="name" />
               <Field name="email" label={t.f_email} type="email" placeholder={t.f_email_ph} required autoComplete="email" inputMode="email" />
 
               {/* Country — chip selector */}
-              <div className="flex flex-col gap-1.5 md:col-span-2">
+              <div className="flex flex-col md:col-span-2">
                 <label className={labelCls}>{t.f_country}</label>
                 <input type="hidden" name="country" value={country} required />
                 <div className="flex flex-wrap gap-2">
@@ -70,7 +70,7 @@ export function Reserve({ locale = "en" }: { locale?: Locale }) {
                         key={c.v}
                         type="button"
                         onClick={() => setCountry(c.v)}
-                        className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-2 font-display text-[12px] font-bold uppercase tracking-[0.12em] transition ${
+                        className={`inline-flex items-center gap-2.5 rounded-full border px-4 py-2.5 font-display text-[11px] font-bold uppercase tracking-[0.14em] transition ${
                           active
                             ? "border-gold bg-gold/15 text-gold"
                             : "border-white/20 bg-black/20 text-white/70 hover:border-white/50"
@@ -86,7 +86,7 @@ export function Reserve({ locale = "en" }: { locale?: Locale }) {
 
               {/* Conditional secondary fields */}
               {country === "United States" && (
-                <div className="flex flex-col gap-1.5 md:col-span-2">
+                <div className="flex flex-col md:col-span-2">
                   <label htmlFor="f-state" className={labelCls}>{t.f_state}</label>
                   <select id="f-state" name="state" required defaultValue="" className={fieldCls}>
                     <option value="" disabled>{t.f_state_ph}</option>
@@ -101,7 +101,7 @@ export function Reserve({ locale = "en" }: { locale?: Locale }) {
               )}
 
               {/* Hand + Size — paired row */}
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col">
                 <label htmlFor="f-hand" className={labelCls}>{t.f_hand}</label>
                 <select id="f-hand" name="hand" defaultValue="" className={fieldCls}>
                   <option value="" disabled>{t.f_choose}</option>
@@ -111,7 +111,7 @@ export function Reserve({ locale = "en" }: { locale?: Locale }) {
                   <option value="Not sure">{t.hand_notsure}</option>
                 </select>
               </div>
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col">
                 <label htmlFor="f-size" className={labelCls}>{t.f_size}</label>
                 <select id="f-size" name="glove_size" defaultValue="" className={fieldCls}>
                   <option value="" disabled>{t.f_choose}</option>
@@ -125,11 +125,11 @@ export function Reserve({ locale = "en" }: { locale?: Locale }) {
               </div>
 
               {/* Size guide — on-demand */}
-              <details className="md:col-span-2 -mt-1">
-                <summary className="cursor-pointer select-none font-mono text-[10px] uppercase tracking-[0.16em] text-white/50 hover:text-gold">
-                  {t.size_help}
+              <details className="md:col-span-2 -mt-2">
+                <summary className="cursor-pointer select-none font-mono text-[11px] uppercase tracking-[0.16em] text-white/40 hover:text-white/70 transition-colors">
+                  ▼ {t.size_help}
                 </summary>
-                <div className="mt-2 rounded-[6px] border border-white/10 bg-black/30 p-3 font-mono text-[10px] uppercase leading-relaxed tracking-[0.12em] text-white/55">
+                <div className="mt-3 rounded-[8px] border border-white/10 bg-black/20 p-4 font-mono text-[11px] leading-relaxed tracking-[0.10em] text-white/50">
                   <div>S &nbsp; · &nbsp; KR 19–21 &nbsp; · &nbsp; JP 21–22</div>
                   <div>M &nbsp; · &nbsp; KR 21–23 &nbsp; · &nbsp; JP 22–23</div>
                   <div>ML · &nbsp; KR 23–25 &nbsp; · &nbsp; JP 23–24 · US M–L</div>
@@ -140,12 +140,13 @@ export function Reserve({ locale = "en" }: { locale?: Locale }) {
 
               {/* Optional details */}
               <details className="md:col-span-2">
-                <summary className="cursor-pointer select-none font-mono text-[11px] uppercase tracking-[0.16em] text-white/60 hover:text-gold">
+                <summary className="cursor-pointer select-none font-mono text-[11px] uppercase tracking-[0.16em] text-white/40 hover:text-white/70 transition-colors">
+                  ▼
                   {t.details_more}
                 </summary>
-                <div className="mt-3.5 grid grid-cols-1 gap-3.5 md:grid-cols-2">
+                <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
                   <Field name="social" label={t.f_social} optional optionalLabel={t.optional} placeholder={t.f_social_ph} autoComplete="username" />
-                  <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-col">
                     <label htmlFor="f-handicap" className={labelCls}>
                       {t.f_handicap} <span className="ml-1.5 text-[9px]">{t.optional}</span>
                     </label>
@@ -159,7 +160,7 @@ export function Reserve({ locale = "en" }: { locale?: Locale }) {
                       <option value="Don't know">{t.h_dontknow}</option>
                     </select>
                   </div>
-                  <div className="flex flex-col gap-1.5 md:col-span-2">
+                  <div className="flex flex-col md:col-span-2">
                     <label htmlFor="f-message" className={labelCls}>
                       {t.f_message} <span className="ml-1.5 text-[9px]">{t.optional}</span>
                     </label>
@@ -174,16 +175,16 @@ export function Reserve({ locale = "en" }: { locale?: Locale }) {
                 </div>
               </details>
 
-              <div className="flex flex-wrap items-center justify-between gap-3 md:col-span-2">
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-2 md:col-span-2">
                 <button
                   type="submit"
                   disabled={pending}
-                  className="inline-flex items-center gap-2.5 rounded-full bg-gold px-5 py-4 font-display text-[13px] font-bold uppercase tracking-[0.14em] text-ink transition hover:bg-gold-hi disabled:opacity-60"
+                  className="inline-flex items-center gap-2.5 rounded-full bg-gold px-6 py-4 font-display text-[12px] font-bold uppercase tracking-[0.16em] text-ink transition hover:bg-gold-hi disabled:opacity-60"
                 >
                   {pending ? t.sending : t.submit}
                   <ArrowRight className="size-3.5" strokeWidth={2.5} />
                 </button>
-                <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/40">
+                <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-white/35">
                   {t.no_spam}
                 </span>
               </div>
@@ -210,7 +211,7 @@ function Field({
 }) {
   const id = `f-${name}`;
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col">
       <label htmlFor={id} className={labelCls}>
         {label}
         {optional && <span className="ml-1.5 text-[9px]">{optionalLabel}</span>}
