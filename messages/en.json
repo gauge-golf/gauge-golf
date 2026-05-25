@@ -122,7 +122,9 @@
   "reserve": {
     "num": "06 — Early Access",
     "title": "Early Access",
-    "lede": "Early access requests are currently handled directly by the founder before the first production batch opens. Korea delivery available now.",
+    "delivery_korea": "Korea delivery available",
+    "delivery_free": "Free delivery · All countries",
+    "lede_text": "Early access requests are currently handled directly by the founder before the first production batch opens.",
     "ok_chip": "Confirmed",
     "ok_title": "You're on the list.",
     "ok_body": "You'll receive future updates and first-batch access information directly from Konstantin.",

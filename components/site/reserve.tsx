@@ -33,8 +33,20 @@ export function Reserve({ locale = "en" }: { locale?: Locale }) {
             <h2 className="m-0 font-display text-[clamp(34px,4.6vw,58px)] font-extrabold leading-none tracking-[-0.01em]">
               {t.title}
             </h2>
+            
+            {/* Delivery info */}
+            <div className="mt-4 flex flex-wrap gap-3">
+              <div className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3 py-1.5">
+                <span className="text-[10px]">🇰🇷</span>
+                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-gold">{t.delivery_korea}</span>
+              </div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5">
+                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/60">{t.delivery_free}</span>
+              </div>
+            </div>
+
             <p className="mt-5 max-w-[44ch] text-base text-white/60">
-              {t.lede}
+              {t.lede_text}
             </p>
           </div>
 
