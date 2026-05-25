@@ -19,7 +19,6 @@ export function Reserve({ locale = "en" }: { locale?: Locale }) {
     { v: "South Korea",   flag: "🇰🇷", short: t.country.kr },
     { v: "Japan",         flag: "🇯🇵", short: t.country.jp },
     { v: "Singapore",     flag: "🇸🇬", short: t.country.sg },
-    { v: "Other",         flag: "🌐",  short: t.country.other },
   ];
   const [state, formAction, pending] = useActionState(reserve, initial);
   const [country, setCountry] = useState("");
@@ -92,11 +91,6 @@ export function Reserve({ locale = "en" }: { locale?: Locale }) {
                     <option value="" disabled>{t.f_state_ph}</option>
                     {US_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
-                </div>
-              )}
-              {country === "Other" && (
-                <div className="md:col-span-2">
-                  <Field name="state" label={t.f_where} placeholder={t.f_where_ph} required />
                 </div>
               )}
 
