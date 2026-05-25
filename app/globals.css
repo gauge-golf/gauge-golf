@@ -70,15 +70,21 @@ html[lang="ko"] .font-mono {
 
 /* Hide default disclosure triangle on details/summary */
 details summary {
-  list-style: none;
-  display: block;
+  list-style: none !important;
+  display: flex !important;
 }
 details summary::-webkit-details-marker {
-  display: none;
+  display: none !important;
 }
 details summary::marker {
-  display: none;
-  content: '';
+  display: none !important;
+  content: '' !important;
+}
+summary {
+  list-style-type: none !important;
+}
+summary::-webkit-details-marker {
+  display: none !important;
 }
 
 /* Select dropdown spacing - add extra right padding for chevron */
