@@ -25,7 +25,7 @@ type Tile =
 
 // Season 1 — 9 published Shorts + 3 upcoming. Add new ones at the end.
 const tiles: Tile[] = [
-  { kind: "video", labelKey: "idea",          day: 1,  locKey: "bali",      youtubeId: "WVyQSwEwuIc" },
+  { kind: "video", labelKey: "idea",          day: 1,  locKey: "bali",      youtubeId: "WVyQSwEwuIc", poster: "/media/day-1-66.png" },
   { kind: "video", labelKey: "mvp",           day: 8,  locKey: "range",     youtubeId: "EniF9cZfPcs" },
   { kind: "video", labelKey: "real_course",   day: 9,  locKey: "on_course", youtubeId: "QHxSvcpWl_o" },
   { kind: "video", labelKey: "wedge",         day: 15, locKey: "range",     youtubeId: "IFe9rSKUVsw" },
