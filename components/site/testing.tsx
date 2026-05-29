@@ -35,7 +35,7 @@ const tiles: Tile[] = [
   { kind: "video", labelKey: "to_factory",    day: 36, locKey: "guangzhou", youtubeId: "coDPuHp1z5U", poster: "/media/day-36.png" },
   { kind: "video", labelKey: "materials",     day: 42, locKey: "factory",   youtubeId: "gPjv741sCns", poster: "/media/gauge-post-01.png" },
   { kind: "video", labelKey: "first_sample",  day: 51, locKey: "factory",   youtubeId: "UVeLYQdEqsI", poster: "/media/founder-kazarichuk.png" },
-  { kind: "video", labelKey: "field_testing", day: 60, locKey: "range", youtubeId: "nhyK_3pF920", poster: "/media/day-60.png" },
+  { kind: "video", labelKey: "field_testing", day: 60, locKey: "range", youtubeId: "nutQvdlrnhk", poster: "/media/day-60.png" },
   { kind: "soon",  labelKey: "korea_launch",  hintKey: "soon_june", poster: "/media/gauge-post-02.png" },
 ];
 
