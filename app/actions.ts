@@ -306,11 +306,16 @@ RULES:
 - The player's bag lists the ONLY clubs they own — never reference a club they don't have.
 - Tone: encouraging, direct, insightful. The player should think "I learned something useful", not "another stats report".`;
 
+    const w = payload.weather;
+    const weatherLine = w
+      ? `\nConditions during the session: ${w.tempC}°C (feels ${w.apparentC}°C), wind ${w.windKmh} km/h ${w.windDir}, precipitation ${w.precipMm} mm, humidity ${w.humidityPct}%, pressure ${w.pressureHpa} hPa, UV ${w.uvIndex} (${w.uvLabel}). Factor these in: head/tail/cross wind, cold or thin/dense air and rain change carry and accuracy — reference them when they plausibly explain shorter/longer or offline shots.`
+      : "";
+
     const userPrompt = `Session Data:
 ${JSON.stringify(payload, null, 2)}
 
 The player's bag contains only these clubs: ${(payload.bag ?? []).join(", ")}.
-They hit ${payload.totalBalls} balls over ${Math.round((payload.durationSecs ?? 0) / 60)} minutes.${goalLine}
+They hit ${payload.totalBalls} balls over ${Math.round((payload.durationSecs ?? 0) / 60)} minutes.${goalLine}${weatherLine}
 Give your coaching report.`;
 
     const response = await callOpenAI(systemPrompt, userPrompt);

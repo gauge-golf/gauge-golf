@@ -1,6 +1,8 @@
 // Shared types for the Coach AI report (kept out of "use server" files,
 // which may only export async functions).
 
+import type { SessionWeather } from "@/lib/weather";
+
 export type CoachReportPayload = {
   plan: unknown; // session plan (clubs + ball counts)
   results: unknown; // logged shots
@@ -8,6 +10,7 @@ export type CoachReportPayload = {
   bag: string[]; // clubs the user actually owns (abbreviations)
   totalBalls: number; // shots logged this session
   durationSecs: number; // session length in seconds
+  weather?: SessionWeather | null; // conditions at session start (if available)
 };
 
 /**

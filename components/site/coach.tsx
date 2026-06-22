@@ -19,6 +19,7 @@ import {
   LogOut,
   Clock,
   Pencil,
+  Cloud,
 } from "lucide-react";
 import {
   analyzeSession,
@@ -64,6 +65,8 @@ import type {
   Shot,
 } from "@/lib/coach-plan";
 import { getClientId } from "@/lib/client-id";
+import { fetchWeather, getCurrentPosition } from "@/lib/weather";
+import type { SessionWeather } from "@/lib/weather";
 
 /* ───────── Data model ───────── */
 
@@ -172,6 +175,9 @@ export function Coach() {
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [durationSecs, setDurationSecs] = useState(0);
   const [nowTick, setNowTick] = useState(0); // drives the live timer (1s ticks)
+
+  // Weather snapshot captured at session start (Open-Meteo). null = unavailable.
+  const [weather, setWeather] = useState<SessionWeather | null>(null);
 
   // AI report
   const [report, setReport] = useState<CoachReport | null>(null);
@@ -368,6 +374,15 @@ export function Coach() {
   async function startSession() {
     if (!basePlan.length || !type || !option) return;
 
+    // Capture weather in the background (don't block the session on it).
+    setWeather(null);
+    void (async () => {
+      const pos = await getCurrentPosition();
+      if (!pos) return;
+      const w = await fetchWeather(pos.lat, pos.lon);
+      if (w) setWeather(w);
+    })();
+
     let effective = basePlan;
 
     // AI adaptive plan: only for verified, returning users (>=1 past session).
@@ -442,6 +457,7 @@ export function Coach() {
       bag: bag.map(clubAbbr),
       totalBalls: shots.length,
       durationSecs,
+      weather,
     });
 
     if (!res.ok) {
@@ -619,6 +635,7 @@ export function Coach() {
     setShots([]);
     setStartedAt(null);
     setDurationSecs(0);
+    setWeather(null);
     setReport(null);
     setReportError(null);
     setFeeling(null);
@@ -1188,6 +1205,37 @@ export function Coach() {
                   ? "Here's what your coach saw today."
                   : "Nice work. Let your coach break it down for you."}
               </p>
+
+              {/* Conditions — captured at session start (impacts ball flight) */}
+              {weather && (
+                <div className="mt-6">
+                  <span className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-white/40">
+                    <Cloud className="size-3" strokeWidth={2.5} />
+                    Conditions
+                  </span>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {(
+                      [
+                        ["Temp", `${weather.tempC}°C`],
+                        ["Feels", `${weather.apparentC}°C`],
+                        ["Wind", `${weather.windKmh} km/h ${weather.windDir}`],
+                        ["Precip", `${weather.precipMm} mm`],
+                        ["Humidity", `${weather.humidityPct}%`],
+                        ["Pressure", `${weather.pressureHpa} hPa`],
+                        ["UV", `${weather.uvIndex} ${weather.uvLabel}`],
+                      ] as [string, string][]
+                    ).map(([k, v]) => (
+                      <span
+                        key={k}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.02] px-3 py-1.5 text-[11px]"
+                      >
+                        <span className="uppercase tracking-[0.1em] text-white/35">{k}</span>
+                        <span className="font-display font-bold text-white/80">{v}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Pre-report: compact summary + coaching CTA */}
               {!report && (
