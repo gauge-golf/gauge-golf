@@ -40,6 +40,7 @@ export const GOAL_OPTIONS: {
 export type AuthUser = {
   id: string; // friendly id, e.g. GG-48291
   email: string;
+  displayName?: string | null; // editable friendly name, e.g. "Konstantin K."
   goal?: PlayerGoal | null;
   targetHandicap?: number | null;
 };

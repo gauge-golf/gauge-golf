@@ -18,6 +18,7 @@ import {
   RefreshCw,
   LogOut,
   Clock,
+  Pencil,
 } from "lucide-react";
 import {
   analyzeSession,
@@ -28,6 +29,7 @@ import {
   signOut,
   generateAdaptivePlan,
   resetMyData,
+  setDisplayName,
 } from "@/app/actions";
 import type {
   CoachReport,
@@ -200,6 +202,11 @@ export function Coach() {
   // Manual refresh of the signed-in user + dashboard
   const [refreshing, setRefreshing] = useState(false);
 
+  // Editable display name
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
+  const [savingName, setSavingName] = useState(false);
+
   // Auto sign-in via secure cookie, then load the returning-user dashboard.
   useEffect(() => {
     let active = true;
@@ -243,6 +250,22 @@ export function Coach() {
       setProgress(prog);
     }
     setRefreshing(false);
+  }
+
+  function startEditName() {
+    setNameDraft(user?.displayName ?? "");
+    setEditingName(true);
+  }
+
+  async function saveName() {
+    if (!user) return;
+    setSavingName(true);
+    const res = await setDisplayName(nameDraft);
+    setSavingName(false);
+    if (res.ok) {
+      setUser({ ...user, displayName: res.displayName });
+      setEditingName(false);
+    }
   }
 
   async function handleResetData() {
@@ -514,6 +537,13 @@ export function Coach() {
         190
       );
 
+      // Golfer name (top-right)
+      ctx.textAlign = "right";
+      ctx.fillStyle = white;
+      ctx.font = "700 28px Arial, sans-serif";
+      ctx.fillText(user?.displayName ?? user?.id ?? "Guest", W - 96, 150);
+      ctx.textAlign = "left";
+
       // Headline
       ctx.fillStyle = white;
       ctx.font = "800 96px Arial, sans-serif";
@@ -678,9 +708,46 @@ export function Coach() {
             )}
             {user && (
               <>
-                <span className="inline-flex items-center rounded-full border border-gold/30 bg-gold/[0.06] px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-gold">
-                  {user.id}
-                </span>
+                {editingName ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold/[0.06] py-1 pl-3 pr-1">
+                    <input
+                      autoFocus
+                      value={nameDraft}
+                      onChange={(e) => setNameDraft(e.target.value.slice(0, 40))}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") saveName();
+                        if (e.key === "Escape") setEditingName(false);
+                      }}
+                      placeholder={user.id}
+                      className="w-28 bg-transparent font-display text-[12px] font-bold tracking-wide text-white outline-none placeholder:text-white/30"
+                    />
+                    <button
+                      onClick={saveName}
+                      disabled={savingName}
+                      aria-label="Save name"
+                      className="inline-flex size-6 items-center justify-center rounded-full bg-gold text-ink transition disabled:opacity-50"
+                    >
+                      {savingName ? (
+                        <Loader2 className="size-3 animate-spin" />
+                      ) : (
+                        <Check className="size-3" strokeWidth={3} />
+                      )}
+                    </button>
+                  </span>
+                ) : (
+                  <button
+                    onClick={startEditName}
+                    title="Edit name"
+                    aria-label="Edit name"
+                    className="group inline-flex items-center gap-1.5 rounded-full border border-gold/30 bg-gold/[0.06] px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-gold transition hover:bg-gold/[0.12]"
+                  >
+                    {user.displayName ?? user.id}
+                    <Pencil
+                      className="size-3 opacity-50 transition group-hover:opacity-100"
+                      strokeWidth={2.5}
+                    />
+                  </button>
+                )}
                 <button
                   onClick={handleRefresh}
                   disabled={refreshing}
@@ -723,7 +790,7 @@ export function Coach() {
                     <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/50">
                       Welcome back
                     </span>
-                    <span className="font-display text-[13px] font-bold text-gold">{user.id}</span>
+                    <span className="font-display text-[13px] font-bold text-gold">{user.displayName ?? user.id}</span>
                   </div>
                   <div className="mt-4 grid grid-cols-3 gap-3">
                     <div className="rounded-[12px] bg-white/[0.04] px-3 py-3 text-center">
@@ -1383,7 +1450,7 @@ export function Coach() {
                     <div className="flex items-center justify-between rounded-[18px] border border-gold/30 bg-gold/[0.04] px-5 py-4">
                       <span className="text-[14px] text-white/70">
                         Saved to{" "}
-                        <span className="font-display font-bold text-gold">{user.id}</span>
+                        <span className="font-display font-bold text-gold">{user.displayName ?? user.id}</span>
                       </span>
                       <Check className="size-4 text-gold" strokeWidth={3} />
                     </div>

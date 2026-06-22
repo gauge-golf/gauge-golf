@@ -545,7 +545,8 @@ export async function verifyOtp(
 
     // Find or create the user.
     const existing = await sql`
-      select id, email, goal, target_handicap from users where lower(email) = ${email} limit 1
+      select id, email, display_name, goal, target_handicap
+      from users where lower(email) = ${email} limit 1
     `;
     let user: AuthUser;
     let isNew = false;
@@ -553,6 +554,7 @@ export async function verifyOtp(
       user = {
         id: existing[0].id as string,
         email: existing[0].email as string,
+        displayName: (existing[0].display_name as string | null) ?? null,
         goal: (existing[0].goal as PlayerGoal | null) ?? null,
         targetHandicap: (existing[0].target_handicap as number | null) ?? null,
       };
@@ -566,7 +568,7 @@ export async function verifyOtp(
         id = generateUserId();
       }
       await sql`insert into users (id, email) values (${id}, ${email})`;
-      user = { id, email, goal: null, targetHandicap: null };
+      user = { id, email, displayName: null, goal: null, targetHandicap: null };
     }
 
     // Link any prior anonymous sessions from this device to the user.
@@ -600,18 +602,37 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     const userId = await currentUserId();
     if (!userId) return null;
     const rows = await sql`
-      select id, email, goal, target_handicap from users where id = ${userId} limit 1
+      select id, email, display_name, goal, target_handicap
+      from users where id = ${userId} limit 1
     `;
     if (!rows.length) return null;
     return {
       id: rows[0].id as string,
       email: rows[0].email as string,
+      displayName: (rows[0].display_name as string | null) ?? null,
       goal: (rows[0].goal as PlayerGoal | null) ?? null,
       targetHandicap: (rows[0].target_handicap as number | null) ?? null,
     };
   } catch (err) {
     console.error("getCurrentUser() failed:", err);
     return null;
+  }
+}
+
+/** Save the signed-in player's display name. Returns the cleaned name. */
+export async function setDisplayName(
+  name: string
+): Promise<{ ok: boolean; displayName: string | null }> {
+  try {
+    const userId = await currentUserId();
+    if (!userId) return { ok: false, displayName: null };
+    const clean = name.trim().slice(0, 40);
+    const value = clean.length ? clean : null;
+    await sql`update users set display_name = ${value} where id = ${userId}`;
+    return { ok: true, displayName: value };
+  } catch (err) {
+    console.error("setDisplayName() failed:", err);
+    return { ok: false, displayName: null };
   }
 }
 
