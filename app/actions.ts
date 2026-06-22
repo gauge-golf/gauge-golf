@@ -9,6 +9,7 @@ import type {
   SaveSessionInput,
   SessionFeeling,
   CoachProgress,
+  SessionHistoryItem,
 } from "@/lib/coach";
 import type { AuthUser, PlayerGoal } from "@/lib/auth";
 import {
@@ -465,6 +466,56 @@ export async function getCoachProgress(
   } catch (err) {
     console.error("getCoachProgress() failed:", err);
     return empty;
+  }
+}
+
+/**
+ * List a player's past sessions (most recent first). Prefers the signed-in
+ * user; otherwise falls back to the anonymous device clientId.
+ */
+export async function getSessionHistory(
+  clientId: string,
+  userId?: string,
+  limit = 50
+): Promise<SessionHistoryItem[]> {
+  if (!clientId && !userId) return [];
+  try {
+    const rows = userId
+      ? await sql`
+          select id, practice_type, total_balls, duration_secs, practice_score,
+                 primary_limitation, next_goal, session_feeling, clubs_practiced,
+                 club_stats, created_at
+          from coach_sessions
+          where user_id = ${userId}
+          order by created_at desc
+          limit ${limit}
+        `
+      : await sql`
+          select id, practice_type, total_balls, duration_secs, practice_score,
+                 primary_limitation, next_goal, session_feeling, clubs_practiced,
+                 club_stats, created_at
+          from coach_sessions
+          where client_id = ${clientId}
+          order by created_at desc
+          limit ${limit}
+        `;
+
+    return rows.map((r) => ({
+      id: Number(r.id),
+      practiceType: (r.practice_type as string | null) ?? null,
+      totalBalls: Number(r.total_balls) || 0,
+      durationSecs: Number(r.duration_secs) || 0,
+      practiceScore: r.practice_score != null ? Number(r.practice_score) : null,
+      primaryLimitation: (r.primary_limitation as string | null) ?? null,
+      nextGoal: (r.next_goal as string | null) ?? null,
+      sessionFeeling: (r.session_feeling as SessionFeeling | null) ?? null,
+      clubsPracticed: r.clubs_practiced != null ? Number(r.clubs_practiced) : null,
+      clubStats: (r.club_stats ?? {}) as SessionHistoryItem["clubStats"],
+      createdAt: new Date(r.created_at as string).toISOString(),
+    }));
+  } catch (err) {
+    console.error("getSessionHistory() failed:", err);
+    return [];
   }
 }
 

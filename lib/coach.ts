@@ -63,3 +63,18 @@ export type CoachProgress = {
   /** Most consistent club across all history (highest avg center %), or null. */
   mostConsistentClub: string | null;
 };
+
+/** One past session, for the history list. */
+export type SessionHistoryItem = {
+  id: number;
+  practiceType: string | null;
+  totalBalls: number;
+  durationSecs: number;
+  practiceScore: number | null;
+  primaryLimitation: string | null;
+  nextGoal: string | null;
+  sessionFeeling: SessionFeeling | null;
+  clubsPracticed: number | null;
+  clubStats: Record<string, ClubStatRecord>;
+  createdAt: string; // ISO timestamp
+};

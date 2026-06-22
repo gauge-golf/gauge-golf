@@ -20,6 +20,8 @@ import {
   Clock,
   Pencil,
   Cloud,
+  History,
+  ChevronDown,
 } from "lucide-react";
 import {
   analyzeSession,
@@ -31,12 +33,14 @@ import {
   generateAdaptivePlan,
   resetMyData,
   setDisplayName,
+  getSessionHistory,
 } from "@/app/actions";
 import type {
   CoachReport,
   SessionFeeling,
   CoachProgress,
   ClubStatRecord,
+  SessionHistoryItem,
 } from "@/lib/coach";
 import type { AuthUser } from "@/lib/auth";
 import { SaveProgressCard } from "./coach-auth";
@@ -213,6 +217,11 @@ export function Coach() {
   const [nameDraft, setNameDraft] = useState("");
   const [savingName, setSavingName] = useState(false);
 
+  // Past sessions (lazy-loaded history)
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [history, setHistory] = useState<SessionHistoryItem[]>([]);
+
   // Auto sign-in via secure cookie, then load the returning-user dashboard.
   useEffect(() => {
     let active = true;
@@ -255,7 +264,19 @@ export function Coach() {
       setDashboard(prog);
       setProgress(prog);
     }
+    setHistory([]);
     setRefreshing(false);
+  }
+
+  async function toggleHistory() {
+    const next = !historyOpen;
+    setHistoryOpen(next);
+    if (next && history.length === 0) {
+      setHistoryLoading(true);
+      const rows = await getSessionHistory(getClientId(), user?.id);
+      setHistory(rows);
+      setHistoryLoading(false);
+    }
   }
 
   function startEditName() {
@@ -291,6 +312,8 @@ export function Coach() {
 
     setDashboard(null);
     setProgress(null);
+    setHistory([]);
+    setHistoryOpen(false);
     setResetting(false);
   }
 
@@ -643,6 +666,8 @@ export function Coach() {
     setSavedSessionId(null);
     setProgress(null);
     setShareError(null);
+    setHistory([]);
+    setHistoryOpen(false);
     setAiPlan(null);
     setAiFocusNote(null);
     setPlanLoading(false);
@@ -854,6 +879,78 @@ export function Coach() {
                           </span>
                         </div>
                       ) : null}
+                    </div>
+                  )}
+
+                  {/* Past sessions — lazy-loaded on open */}
+                  <button
+                    onClick={toggleHistory}
+                    className="mt-4 flex w-full items-center justify-between rounded-[12px] bg-white/[0.04] px-4 py-3 text-left transition hover:bg-white/[0.06]"
+                  >
+                    <span className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.12em] text-white/70">
+                      <History className="size-3.5 text-gold" strokeWidth={2.5} />
+                      Past Sessions
+                    </span>
+                    <ChevronDown
+                      className={`size-4 text-white/50 transition ${historyOpen ? "rotate-180" : ""}`}
+                      strokeWidth={2.5}
+                    />
+                  </button>
+
+                  {historyOpen && (
+                    <div className="mt-3 space-y-2">
+                      {historyLoading ? (
+                        <div className="flex items-center gap-2 px-1 py-2 text-[12px] text-white/50">
+                          <Loader2 className="size-4 animate-spin text-gold" />
+                          Loading your sessions...
+                        </div>
+                      ) : history.length === 0 ? (
+                        <p className="px-1 py-2 text-[12px] text-white/45">
+                          No saved sessions yet.
+                        </p>
+                      ) : (
+                        history.map((s) => (
+                          <div
+                            key={s.id}
+                            className="rounded-[12px] border border-white/10 bg-white/[0.02] px-4 py-3"
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <span className="text-[12px] font-bold text-white/80">
+                                {new Date(s.createdAt).toLocaleDateString(undefined, {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                })}
+                              </span>
+                              {s.practiceScore != null && (
+                                <span className="shrink-0 rounded-full border border-gold/30 bg-gold/[0.08] px-2 py-0.5 font-mono text-[10px] font-bold text-gold">
+                                  {s.practiceScore}/100
+                                </span>
+                              )}
+                            </div>
+                            <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-white/50">
+                              <span>{s.practiceType ?? "Session"}</span>
+                              <span>{s.totalBalls} balls</span>
+                              <span>{formatDuration(s.durationSecs)}</span>
+                              {s.clubsPracticed != null && (
+                                <span>{s.clubsPracticed} clubs</span>
+                              )}
+                            </div>
+                            {s.primaryLimitation && (
+                              <p className="mt-1.5 text-[12px] text-white/70">
+                                <span className="text-white/40">Focus: </span>
+                                {s.primaryLimitation}
+                              </p>
+                            )}
+                            {s.nextGoal && (
+                              <p className="mt-1 text-[12px] text-white/60">
+                                <span className="text-white/40">Next: </span>
+                                {s.nextGoal}
+                              </p>
+                            )}
+                          </div>
+                        ))
+                      )}
                     </div>
                   )}
 
