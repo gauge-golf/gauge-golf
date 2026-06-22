@@ -120,7 +120,6 @@ type PlanStep = { key: string; label: string; club: string; target: number; ball
 
 /** Order + display labels + club abbreviation + target (m) for every plan slot. */
 const STEP_LABELS: { key: string; label: string; club: string; target: number }[] = [
-  { key: "warmup", label: "Warm Up", club: "WU", target: 50 },
   { key: "sw", label: "Sand Wedge", club: "SW", target: 60 },
   { key: "pw", label: "Pitching Wedge", club: "PW", target: 90 },
   { key: "i9", label: "9 Iron", club: "9I", target: 110 },
@@ -158,8 +157,8 @@ type Shot = {
   direction: Direction;
 };
 
-/** Selectable clubs for the bag (everything except the warm-up phase). */
-const BAG_CLUBS = STEP_LABELS.filter((s) => s.key !== "warmup");
+/** Selectable clubs for the bag. */
+const BAG_CLUBS = STEP_LABELS;
 
 /** Look up a club's short abbreviation from its plan key. */
 function clubAbbr(key: string): string {
@@ -167,11 +166,11 @@ function clubAbbr(key: string): string {
 }
 
 /**
- * Build a plan for the given ball count, distributing balls only across the
- * warm-up phase plus the clubs the user actually has in their bag.
+ * Build a plan for the given ball count, distributing balls evenly across
+ * the clubs the user actually has in their bag.
  */
 function buildPlan(ballCount: number, bag: string[]): PlanStep[] {
-  const slots = STEP_LABELS.filter((s) => s.key === "warmup" || bag.includes(s.key));
+  const slots = STEP_LABELS.filter((s) => bag.includes(s.key));
   const n = slots.length;
   if (n === 0) return [];
 
