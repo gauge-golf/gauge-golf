@@ -17,6 +17,7 @@ import {
   Trash2,
   RefreshCw,
   LogOut,
+  Clock,
 } from "lucide-react";
 import {
   analyzeSession,
@@ -168,6 +169,7 @@ export function Coach() {
   // Session timing
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [durationSecs, setDurationSecs] = useState(0);
+  const [nowTick, setNowTick] = useState(0); // drives the live timer (1s ticks)
 
   // AI report
   const [report, setReport] = useState<CoachReport | null>(null);
@@ -302,6 +304,21 @@ export function Coach() {
   const inSession = stepIndex !== null;
   const currentStep = inSession && plan[stepIndex] ? plan[stepIndex] : null;
   const sessionComplete = inSession && !currentStep;
+
+  // Live session timer — ticks every second while the session is in progress.
+  const sessionRunning = inSession && !sessionComplete && startedAt !== null;
+  useEffect(() => {
+    if (!sessionRunning) return;
+    setNowTick(Date.now());
+    const id = setInterval(() => setNowTick(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [sessionRunning]);
+
+  // Seconds to display: live while running, frozen total once complete.
+  const liveSecs =
+    sessionRunning && startedAt
+      ? Math.max(0, Math.round((nowTick - startedAt) / 1000))
+      : durationSecs;
 
   // Shot-button labelling (feedback #4).
   const isLastShotOfClub = currentStep ? shotNum >= currentStep.balls : false;
@@ -507,24 +524,25 @@ export function Coach() {
 
       // Stat rows
       const rows: [string, string][] = [
+        ["Session Time", formatDuration(durationSecs)],
         ["Longest Driver", driverBest ? `${driverBest} m` : "—"],
         ["Most Consistent", mostConsistent ? mostConsistent.club : "—"],
         ["Current Streak", `${progress?.streakWeeks ?? 0} wk`],
         ["Total Balls Hit", `${(progress?.totalBalls ?? shots.length).toLocaleString()}`],
       ];
-      let y = 540;
+      let y = 500;
       for (const [label, value] of rows) {
         ctx.fillStyle = "rgba(255,255,255,0.06)";
-        ctx.fillRect(96, y, W - 192, 120);
+        ctx.fillRect(96, y, W - 192, 108);
         ctx.fillStyle = muted;
         ctx.font = "600 28px Arial, sans-serif";
-        ctx.fillText(label.toUpperCase(), 128, y + 50);
+        ctx.fillText(label.toUpperCase(), 128, y + 46);
         ctx.fillStyle = gold;
         ctx.textAlign = "right";
-        ctx.font = "800 56px Arial, sans-serif";
-        ctx.fillText(value, W - 128, y + 78);
+        ctx.font = "800 52px Arial, sans-serif";
+        ctx.fillText(value, W - 128, y + 72);
         ctx.textAlign = "left";
-        y += 144;
+        y += 132;
       }
 
       // Footer
@@ -633,6 +651,12 @@ export function Coach() {
                       ? "Step 2 / 2"
                       : "Ready"}
             </span>
+            {sessionRunning && (
+              <span className="flex items-center gap-1.5 border-l border-white/15 pl-3 tabular-nums text-gold">
+                <Clock className="size-3" strokeWidth={2.5} />
+                {formatDuration(liveSecs)}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-3">
             {((type && !result) || started) && (
