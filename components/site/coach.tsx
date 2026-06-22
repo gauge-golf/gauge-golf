@@ -14,6 +14,9 @@ import {
   Trophy,
   Flame,
   Share2,
+  Trash2,
+  RefreshCw,
+  LogOut,
 } from "lucide-react";
 import {
   analyzeSession,
@@ -22,6 +25,8 @@ import {
   getCoachProgress,
   getCurrentUser,
   signOut,
+  generateAdaptivePlan,
+  resetMyData,
 } from "@/app/actions";
 import type {
   CoachReport,
@@ -31,6 +36,31 @@ import type {
 } from "@/lib/coach";
 import type { AuthUser } from "@/lib/auth";
 import { SaveProgressCard } from "./coach-auth";
+import {
+  STEP_LABELS,
+  BAG_CLUBS,
+  OUT,
+  DIRECTIONS,
+  DEFAULT_DIRECTION,
+  FEELINGS,
+  distanceOptions,
+  clubAbbr,
+  buildDrivingRangePlan,
+  buildWarmUpPlan,
+  buildHandicapPlan,
+  buildFixMissPlan,
+  planStepsFromCounts,
+  formatDuration,
+  computeStats,
+  mostConsistentClub,
+} from "@/lib/coach-plan";
+import type {
+  PlanStep,
+  DistanceResult,
+  Direction,
+  Shot,
+} from "@/lib/coach-plan";
+import { getClientId } from "@/lib/client-id";
 
 /* ───────── Data model ───────── */
 
@@ -114,175 +144,9 @@ const PRACTICE_TYPES: PracticeType[] = [
   },
 ];
 
-/* ───────── Static training plans (hardcoded — no AI / no API) ───────── */
-
-type PlanStep = { key: string; label: string; club: string; target: number; balls: number };
-
-/** Order + display labels + club abbreviation + target (m) for every plan slot. */
-const STEP_LABELS: { key: string; label: string; club: string; target: number }[] = [
-  { key: "sw", label: "Sand Wedge", club: "SW", target: 60 },
-  { key: "pw", label: "Pitching Wedge", club: "PW", target: 90 },
-  { key: "i9", label: "9 Iron", club: "9I", target: 110 },
-  { key: "i8", label: "8 Iron", club: "8I", target: 125 },
-  { key: "i7", label: "7 Iron", club: "7I", target: 140 },
-  { key: "i6", label: "6 Iron", club: "6I", target: 155 },
-  { key: "i5", label: "5 Iron", club: "5I", target: 170 },
-  { key: "driver", label: "Driver", club: "DR", target: 230 },
-];
-
-const OUT = "Out" as const;
-type DistanceResult = number | typeof OUT;
-
-/**
- * Distance result options (m) scaled to the club's target, in 5 m steps.
- * A wedge offers ~10–110 m; a driver offers ~180–280 m. Prevents the old
- * one-size-fits-all 30–130 m list that capped the driver far too low.
- */
-function distanceOptions(target: number): number[] {
-  const min = Math.max(5, Math.round((target - 50) / 5) * 5);
-  const max = Math.round((target + 50) / 5) * 5;
-  const out: number[] = [];
-  for (let d = min; d <= max; d += 5) out.push(d);
-  return out;
-}
-
-/** Direction options. */
-const DIRECTIONS = ["Left", "Center", "Right"] as const;
-type Direction = (typeof DIRECTIONS)[number];
-
-type Shot = {
-  club: string;
-  target: number;
-  distance: DistanceResult;
-  direction: Direction;
-};
-
-/** Selectable clubs for the bag. */
-const BAG_CLUBS = STEP_LABELS;
-
-/** Look up a club's short abbreviation from its plan key. */
-function clubAbbr(key: string): string {
-  return STEP_LABELS.find((s) => s.key === key)?.club ?? key.toUpperCase();
-}
-
-/**
- * Build a plan for the given ball count, distributing balls evenly across
- * the clubs the user actually has in their bag.
- */
-function buildPlan(ballCount: number, bag: string[]): PlanStep[] {
-  const slots = STEP_LABELS.filter((s) => bag.includes(s.key));
-  const n = slots.length;
-  if (n === 0) return [];
-
-  const base = Math.floor(ballCount / n);
-  let remainder = ballCount - base * n;
-
-  return slots.map((s) => {
-    let balls = base;
-    if (remainder > 0) {
-      balls += 1;
-      remainder -= 1;
-    }
-    return { ...s, balls };
-  });
-}
-
-const DEFAULT_DIRECTION: Direction = "Center";
-
-/** Format seconds as a compact "Xm" or "Xm Ys" string. */
-function formatDuration(secs: number): string {
-  if (secs < 60) return `${secs}s`;
-  const m = Math.floor(secs / 60);
-  const s = secs % 60;
-  return s ? `${m}m ${s}s` : `${m}m`;
-}
-
-/** Self-assessment options for Section 5. */
-const FEELINGS: { value: SessionFeeling; label: string }[] = [
-  { value: "weak", label: "Weak" },
-  { value: "normal", label: "Normal" },
-  { value: "strong", label: "Strong" },
-  { value: "very_strong", label: "Very Strong" },
-];
-
-/** Anonymous, per-device id stored in localStorage (no login required). */
-function getClientId(): string {
-  if (typeof window === "undefined") return "";
-  const KEY = "gg_coach_client_id";
-  let id = localStorage.getItem(KEY);
-  if (!id) {
-    id =
-      typeof crypto !== "undefined" && crypto.randomUUID
-        ? crypto.randomUUID()
-        : `c_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-    localStorage.setItem(KEY, id);
-  }
-  return id;
-}
-
-/* ───────── Statistics (pure math — no AI / no API) ───────── */
-
-type ClubStats = {
-  shots: number;
-  averageDistance: number;
-  bestDistance: number;
-  outShots: number;
-  leftPct: number;
-  centerPct: number;
-  rightPct: number;
-};
-
-function pct(part: number, total: number): number {
-  return total === 0 ? 0 : Math.round((part / total) * 100);
-}
-
-/** Group shots by club and compute distance + direction statistics. */
-function computeStats(shots: Shot[]): Record<string, ClubStats> {
-  const byClub: Record<string, Shot[]> = {};
-  for (const s of shots) {
-    (byClub[s.club] ??= []).push(s);
-  }
-
-  const stats: Record<string, ClubStats> = {};
-  for (const [club, list] of Object.entries(byClub)) {
-    const total = list.length;
-    // Only numeric distances count toward average/best; "Out" shots are tracked separately.
-    const numeric = list
-      .map((s) => s.distance)
-      .filter((d): d is number => typeof d === "number");
-    const outShots = total - numeric.length;
-    const left = list.filter((s) => s.direction === "Left").length;
-    const center = list.filter((s) => s.direction === "Center").length;
-    const right = list.filter((s) => s.direction === "Right").length;
-
-    stats[club] = {
-      shots: total,
-      averageDistance: numeric.length
-        ? Math.round(numeric.reduce((a, b) => a + b, 0) / numeric.length)
-        : 0,
-      bestDistance: numeric.length ? Math.max(...numeric) : 0,
-      outShots,
-      leftPct: pct(left, total),
-      centerPct: pct(center, total),
-      rightPct: pct(right, total),
-    };
-  }
-  return stats;
-}
-
-/** Club with the highest center-hit % this session (min 2 shots). null if none. */
-function mostConsistentClub(
-  stats: Record<string, ClubStats>
-): { club: string; centerPct: number } | null {
-  let best: { club: string; centerPct: number } | null = null;
-  for (const [club, s] of Object.entries(stats)) {
-    if (s.shots < 2) continue;
-    if (!best || s.centerPct > best.centerPct) {
-      best = { club, centerPct: s.centerPct };
-    }
-  }
-  return best;
-}
+// Domain logic (plan builders, shot/stat model, statistics) lives in
+// @/lib/coach-plan. The anonymous device id lives in @/lib/client-id.
+// This component is a thin orchestrator over those pure modules.
 
 /* ───────── Component ───────── */
 
@@ -323,6 +187,17 @@ export function Coach() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [dashboard, setDashboard] = useState<CoachProgress | null>(null);
 
+  // AI adaptive plan (returning signed-in users only)
+  const [aiPlan, setAiPlan] = useState<PlanStep[] | null>(null);
+  const [aiFocusNote, setAiFocusNote] = useState<string | null>(null);
+  const [planLoading, setPlanLoading] = useState(false);
+
+  // Data reset (clean slate — useful for testing)
+  const [resetting, setResetting] = useState(false);
+
+  // Manual refresh of the signed-in user + dashboard
+  const [refreshing, setRefreshing] = useState(false);
+
   // Auto sign-in via secure cookie, then load the returning-user dashboard.
   useEffect(() => {
     let active = true;
@@ -352,15 +227,77 @@ export function Coach() {
     setDashboard(null);
   }
 
+  async function handleRefresh() {
+    setRefreshing(true);
+    const u = await getCurrentUser();
+    setUser(u);
+    if (u) {
+      const prog = await getCoachProgress(
+        getClientId(),
+        savedSessionId ?? undefined,
+        u.id
+      );
+      setDashboard(prog);
+      setProgress(prog);
+    }
+    setRefreshing(false);
+  }
+
+  async function handleResetData() {
+    const ok = window.confirm(
+      "Delete all your training history and start from zero? This can't be undone."
+    );
+    if (!ok) return;
+
+    setResetting(true);
+    const clientId = getClientId();
+    await resetMyData(clientId);
+
+    // Start the anonymous device fresh so old sessions can't reattach.
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("gg_coach_client_id");
+    }
+
+    setDashboard(null);
+    setProgress(null);
+    setResetting(false);
+  }
+
   const result =
     type && option
       ? { practiceType: type.label, [type.optionKey]: option.value }
       : null;
 
-  const plan =
-    type?.key === "driving-range" && typeof option?.value === "number"
-      ? buildPlan(option.value, bag)
-      : [];
+  // Hardcoded adaptive plan — the single source of truth for eligible clubs
+  // and total ball count. Used directly for first-time / anonymous players.
+  const basePlan = (() => {
+    if (!type || !option) return [];
+
+    switch (type.key) {
+      case "driving-range":
+        return typeof option.value === "number"
+          ? buildDrivingRangePlan(option.value, bag)
+          : [];
+      case "warm-up":
+        return typeof option.value === "number"
+          ? buildWarmUpPlan(option.value, bag)
+          : [];
+      case "handicap":
+        return typeof option.value === "string"
+          ? buildHandicapPlan(option.value, bag)
+          : [];
+      case "fix-miss":
+        return typeof option.value === "string"
+          ? buildFixMissPlan(option.value, bag)
+          : [];
+      default:
+        return [];
+    }
+  })();
+
+  // For returning signed-in users we override with an AI plan (set in
+  // startSession); everyone else uses the hardcoded base plan.
+  const plan = aiPlan ?? basePlan;
 
   const inSession = stepIndex !== null;
   const currentStep = inSession && plan[stepIndex] ? plan[stepIndex] : null;
@@ -388,11 +325,44 @@ export function Coach() {
     ? { club: currentStep.club, target: currentStep.target, distance, direction }
     : null;
 
-  function startSession() {
-    if (!plan.length) return;
+  async function startSession() {
+    if (!basePlan.length || !type || !option) return;
+
+    let effective = basePlan;
+
+    // AI adaptive plan: only for verified, returning users (>=1 past session).
+    // Everyone else (first-timers / anonymous) uses the hardcoded base plan.
+    const hasHistory = !!user && (dashboard?.totalSessions ?? 0) >= 1;
+    if (hasHistory) {
+      setPlanLoading(true);
+      const totalBalls = basePlan.reduce((acc, s) => acc + s.balls, 0);
+      const clubs = basePlan.map((s) => s.key);
+      const res = await generateAdaptivePlan({
+        practiceType: type.label,
+        goal:
+          typeof option.value === "string"
+            ? option.value
+            : String(option.value),
+        totalBalls,
+        clubs,
+      });
+      if (res.ok) {
+        effective = planStepsFromCounts(res.plan);
+        setAiPlan(effective);
+        setAiFocusNote(res.focusNote);
+      } else {
+        setAiPlan(null);
+        setAiFocusNote(null);
+      }
+      setPlanLoading(false);
+    } else {
+      setAiPlan(null);
+      setAiFocusNote(null);
+    }
+
     setStepIndex(0);
     setShotNum(1);
-    setDistance(plan[0].target);
+    setDistance(effective[0].target);
     setDirection(DEFAULT_DIRECTION);
     setShots([]);
     setStartedAt(Date.now());
@@ -608,6 +578,9 @@ export function Coach() {
     setSavedSessionId(null);
     setProgress(null);
     setShareError(null);
+    setAiPlan(null);
+    setAiFocusNote(null);
+    setPlanLoading(false);
   }
 
   // Derived end-of-session figures (used by Sections 1, 2 and 7).
@@ -680,13 +653,31 @@ export function Coach() {
               </button>
             )}
             {user && (
-              <button
-                onClick={handleSignOut}
-                title="Sign out"
-                className="inline-flex items-center gap-1.5 rounded-full border border-gold/30 bg-gold/[0.06] px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-gold transition hover:bg-gold/[0.12]"
-              >
-                {user.id}
-              </button>
+              <>
+                <span className="inline-flex items-center rounded-full border border-gold/30 bg-gold/[0.06] px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-gold">
+                  {user.id}
+                </span>
+                <button
+                  onClick={handleRefresh}
+                  disabled={refreshing}
+                  title="Refresh"
+                  aria-label="Refresh"
+                  className="inline-flex size-8 items-center justify-center rounded-full border border-white/20 text-white/60 transition hover:text-white disabled:opacity-50"
+                >
+                  <RefreshCw
+                    className={`size-3.5 ${refreshing ? "animate-spin" : ""}`}
+                    strokeWidth={2.5}
+                  />
+                </button>
+                <button
+                  onClick={handleSignOut}
+                  title="Log out"
+                  aria-label="Log out"
+                  className="inline-flex size-8 items-center justify-center rounded-full border border-white/20 text-white/60 transition hover:text-white"
+                >
+                  <LogOut className="size-3.5" strokeWidth={2.5} />
+                </button>
+              </>
             )}
           </div>
         </header>
@@ -757,6 +748,19 @@ export function Coach() {
                       ) : null}
                     </div>
                   )}
+
+                  <button
+                    onClick={handleResetData}
+                    disabled={resetting}
+                    className="mt-4 inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.12em] text-white/35 transition hover:text-red-400 disabled:opacity-50"
+                  >
+                    {resetting ? (
+                      <Loader2 className="size-3 animate-spin" strokeWidth={2.5} />
+                    ) : (
+                      <Trash2 className="size-3" strokeWidth={2.5} />
+                    )}
+                    Reset Data
+                  </button>
                 </div>
               )}
 
@@ -933,10 +937,20 @@ export function Coach() {
                 <div className="mx-auto max-w-[640px]">
                   <button
                     onClick={startSession}
-                    className="flex w-full items-center justify-center gap-2.5 rounded-full bg-gold px-6 py-4 font-display text-[14px] font-bold uppercase tracking-[0.14em] text-ink transition hover:bg-gold-hi active:translate-y-px"
+                    disabled={planLoading}
+                    className="flex w-full items-center justify-center gap-2.5 rounded-full bg-gold px-6 py-4 font-display text-[14px] font-bold uppercase tracking-[0.14em] text-ink transition hover:bg-gold-hi active:translate-y-px disabled:opacity-70"
                   >
-                    Start Session
-                    <ArrowRight className="size-3.5" strokeWidth={2.5} />
+                    {planLoading ? (
+                      <>
+                        <Loader2 className="size-3.5 animate-spin" strokeWidth={2.5} />
+                        Building Your Plan
+                      </>
+                    ) : (
+                      <>
+                        Start Session
+                        <ArrowRight className="size-3.5" strokeWidth={2.5} />
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -946,6 +960,19 @@ export function Coach() {
           {/* SHOT INPUT — log one shot at a time */}
           {inSession && currentStep && shot && (
             <section className="pb-28">
+              {/* AI coach focus note (returning users only) */}
+              {aiFocusNote && (
+                <div className="mb-6 flex items-start gap-2.5 rounded-[18px] border border-gold/30 bg-gold/[0.06] p-4">
+                  <Crosshair className="mt-0.5 size-4 shrink-0 text-gold" strokeWidth={2.5} />
+                  <div>
+                    <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-gold/80">
+                      Today&apos;s Focus
+                    </span>
+                    <p className="mt-1 text-sm text-white/80">{aiFocusNote}</p>
+                  </div>
+                </div>
+              )}
+
               {/* Club / Target / Shot counter */}
               <div className="grid grid-cols-3 gap-3">
                 <div className="rounded-[18px] border border-white/15 bg-white/[0.02] p-4">

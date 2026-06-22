@@ -10,7 +10,7 @@ import type {
   SessionFeeling,
   CoachProgress,
 } from "@/lib/coach";
-import type { AuthUser } from "@/lib/auth";
+import type { AuthUser, PlayerGoal } from "@/lib/auth";
 import {
   SESSION_COOKIE,
   SESSION_MAX_AGE,
@@ -112,43 +112,149 @@ async function callOpenAI(systemPrompt: string, userPrompt: string): Promise<str
 }
 
 /**
- * AI Call #1 — Generate training plan BEFORE session starts.
- * Input: practice type + ball count.
- * Output: club distribution plan (JSON).
+ * AI Adaptive Plan — personalizes the ball distribution for RETURNING,
+ * signed-in users based on their previous session results.
+ *
+ * Cost control: only runs for verified users (userId read from the signed
+ * cookie) who already have history. First-time / anonymous players fall back
+ * to the client's hardcoded adaptive plan.
+ *
+ * The client supplies the eligible club keys + total balls (single source of
+ * truth); the AI only redistributes those balls and returns a short rationale.
  */
-export async function generatePlan(
-  practiceType: string,
-  ballCount: number
-): Promise<{ ok: true; plan: Record<string, number> } | { ok: false; message: string }> {
+export async function generateAdaptivePlan(input: {
+  practiceType: string;
+  goal?: string; // miss type / handicap / etc. (raw option value as string)
+  totalBalls: number;
+  clubs: string[]; // eligible club keys (e.g. ["sw","pw","i7"])
+}): Promise<
+  | { ok: true; plan: Record<string, number>; focusNote: string }
+  | { ok: false; fallback: true; message: string }
+> {
   try {
-    const systemPrompt = `You are a professional golf coach. Generate a training plan distribution for a driving range session.
-Return ONLY valid JSON in this exact format:
+    const userId = await currentUserId();
+    if (!userId) {
+      return { ok: false, fallback: true, message: "Sign in for AI plans." };
+    }
+    if (!input.clubs.length) {
+      return { ok: false, fallback: true, message: "No clubs selected." };
+    }
+
+    // Player's profile goal (set once at registration) — steers the plan.
+    const profile = await sql`
+      select goal, target_handicap from users where id = ${userId} limit 1
+    `;
+    const playerGoal = (profile[0]?.goal as string | null) ?? null;
+    const targetHandicap = (profile[0]?.target_handicap as number | null) ?? null;
+
+    // Pull the last few sessions (most recent first) for this user.
+    const rows = await sql`
+      select practice_type, practice_score, primary_limitation, next_goal,
+             club_stats, created_at
+      from coach_sessions
+      where user_id = ${userId}
+      order by created_at desc
+      limit 5
+    `;
+
+    // No history yet → let the client use its hardcoded adaptive plan.
+    if (!rows.length) {
+      return { ok: false, fallback: true, message: "No history yet." };
+    }
+
+    const history = rows.map((r) => ({
+      practiceType: r.practice_type,
+      score: Number(r.practice_score) || null,
+      limitation: r.primary_limitation,
+      nextGoal: r.next_goal,
+      clubStats: r.club_stats ?? {},
+      date: r.created_at,
+    }));
+
+    const systemPrompt = `You are an elite golf coach building the NEXT practice plan for a returning player, using their recent session history.
+
+You are given:
+- The eligible club keys for this session (use ONLY these).
+- The total number of balls to distribute (the sum MUST equal this exactly).
+- The player's recent sessions: scores, the ONE limitation you previously identified, the goal you set, and per-club stats (best distance, center-hit %, shots).
+
+Return ONLY valid JSON in this exact shape:
 {
-  "warmup": 10,
-  "sw": 10,
-  "pw": 10,
-  "i9": 10,
-  "i8": 10,
-  "i7": 10,
-  "i6": 10,
-  "i5": 10,
-  "driver": 20
+  "plan": { "<clubKey>": <ballsInt>, ... },
+  "focusNote": "One short sentence telling the player what this plan targets and why, referencing their last session."
 }
 
-The total must equal the requested ball count. Adjust proportions based on the practice type.`;
+RULES:
+- Keys in "plan" MUST be a subset of the provided eligible club keys. Never invent clubs.
+- The integer ball counts MUST sum to EXACTLY the provided total.
+- Allocate MORE balls to clubs/areas tied to the player's biggest limitation and lowest center-hit %, and FEWER to clubs they've already mastered.
+- Keep at least a few balls on strong clubs to maintain feel.
+- focusNote: encouraging, specific, 1 sentence, no raw percentages.`;
 
-    const userPrompt = `Practice Type: ${practiceType}
-Ball Count: ${ballCount}
+    const goalLine = playerGoal
+      ? `Player's PRIMARY goal: ${playerGoal}${
+          targetHandicap ? ` (target handicap ${targetHandicap})` : ""
+        }. Weight the plan toward this goal.`
+      : "Player has not set a primary goal.";
 
-Generate the plan.`;
+    const userPrompt = `Practice type: ${input.practiceType}
+Session context: ${input.goal ?? "general improvement"}
+${goalLine}
+Eligible club keys: ${input.clubs.join(", ")}
+Total balls to distribute (sum must equal this): ${input.totalBalls}
+
+Recent sessions (most recent first):
+${JSON.stringify(history, null, 2)}
+
+Build the adaptive plan.`;
 
     const response = await callOpenAI(systemPrompt, userPrompt);
-    const plan = JSON.parse(response.trim());
+    const parsed = JSON.parse(response.trim()) as {
+      plan?: Record<string, number>;
+      focusNote?: string;
+    };
 
-    return { ok: true, plan };
+    const raw = parsed.plan ?? {};
+    // Sanitize: keep only eligible clubs, coerce to non-negative ints.
+    const allowed = new Set(input.clubs);
+    const clean: Record<string, number> = {};
+    for (const [key, val] of Object.entries(raw)) {
+      if (!allowed.has(key)) continue;
+      const n = Math.max(0, Math.round(Number(val) || 0));
+      if (n > 0) clean[key] = n;
+    }
+
+    // If the model returned nothing usable, fall back.
+    const keys = Object.keys(clean);
+    if (!keys.length) {
+      return { ok: false, fallback: true, message: "Could not build plan." };
+    }
+
+    // Reconcile rounding so the totals match exactly.
+    let sum = keys.reduce((acc, k) => acc + clean[k], 0);
+    let i = 0;
+    while (sum !== input.totalBalls && keys.length) {
+      const k = keys[i % keys.length];
+      if (sum < input.totalBalls) {
+        clean[k] += 1;
+        sum += 1;
+      } else if (clean[k] > 1) {
+        clean[k] -= 1;
+        sum -= 1;
+      }
+      i += 1;
+      // Safety valve to avoid infinite loops.
+      if (i > input.totalBalls * 4 + 50) break;
+    }
+
+    return {
+      ok: true,
+      plan: clean,
+      focusNote: parsed.focusNote?.trim() || "Tuned to your last session.",
+    };
   } catch (err) {
-    console.error("generatePlan() failed:", err);
-    return { ok: false, message: "Failed to generate plan. Try again." };
+    console.error("generateAdaptivePlan() failed:", err);
+    return { ok: false, fallback: true, message: "Plan generation failed." };
   }
 }
 
@@ -161,6 +267,22 @@ export async function analyzeSession(
   payload: CoachReportPayload
 ): Promise<CoachReportState> {
   try {
+    // If signed in, align feedback with the player's profile goal.
+    let goalLine = "";
+    const userId = await currentUserId();
+    if (userId) {
+      const profile = await sql`
+        select goal, target_handicap from users where id = ${userId} limit 1
+      `;
+      const goal = (profile[0]?.goal as string | null) ?? null;
+      const th = (profile[0]?.target_handicap as number | null) ?? null;
+      if (goal) {
+        goalLine = `\nThe player's PRIMARY goal is: ${goal}${
+          th ? ` (target handicap ${th})` : ""
+        }. Make the nextGoal and feedback push them toward this.`;
+      }
+    }
+
     const systemPrompt = `You are an elite golf coach giving a player personal feedback after a driving-range session. You speak like a real coach drawing on classic golf instruction (Hogan, Penick, Pelz) — focused on cause and effect, not numbers.
 
 Return ONLY valid JSON in this exact shape:
@@ -188,7 +310,7 @@ RULES:
 ${JSON.stringify(payload, null, 2)}
 
 The player's bag contains only these clubs: ${(payload.bag ?? []).join(", ")}.
-They hit ${payload.totalBalls} balls over ${Math.round((payload.durationSecs ?? 0) / 60)} minutes.
+They hit ${payload.totalBalls} balls over ${Math.round((payload.durationSecs ?? 0) / 60)} minutes.${goalLine}
 Give your coaching report.`;
 
     const response = await callOpenAI(systemPrompt, userPrompt);
@@ -422,11 +544,18 @@ export async function verifyOtp(
     await sql`update otp_codes set consumed = true where id = ${matches[0].id}`;
 
     // Find or create the user.
-    const existing = await sql`select id, email from users where lower(email) = ${email} limit 1`;
+    const existing = await sql`
+      select id, email, goal, target_handicap from users where lower(email) = ${email} limit 1
+    `;
     let user: AuthUser;
     let isNew = false;
     if (existing.length) {
-      user = { id: existing[0].id as string, email: existing[0].email as string };
+      user = {
+        id: existing[0].id as string,
+        email: existing[0].email as string,
+        goal: (existing[0].goal as PlayerGoal | null) ?? null,
+        targetHandicap: (existing[0].target_handicap as number | null) ?? null,
+      };
     } else {
       isNew = true;
       // Generate a unique GG-id (retry on the rare collision).
@@ -437,7 +566,7 @@ export async function verifyOtp(
         id = generateUserId();
       }
       await sql`insert into users (id, email) values (${id}, ${email})`;
-      user = { id, email };
+      user = { id, email, goal: null, targetHandicap: null };
     }
 
     // Link any prior anonymous sessions from this device to the user.
@@ -470,12 +599,41 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
   try {
     const userId = await currentUserId();
     if (!userId) return null;
-    const rows = await sql`select id, email from users where id = ${userId} limit 1`;
+    const rows = await sql`
+      select id, email, goal, target_handicap from users where id = ${userId} limit 1
+    `;
     if (!rows.length) return null;
-    return { id: rows[0].id as string, email: rows[0].email as string };
+    return {
+      id: rows[0].id as string,
+      email: rows[0].email as string,
+      goal: (rows[0].goal as PlayerGoal | null) ?? null,
+      targetHandicap: (rows[0].target_handicap as number | null) ?? null,
+    };
   } catch (err) {
     console.error("getCurrentUser() failed:", err);
     return null;
+  }
+}
+
+/** Save the signed-in player's profile goal (set once at registration). */
+export async function setUserGoal(
+  goal: PlayerGoal,
+  targetHandicap?: number | null
+): Promise<{ ok: boolean }> {
+  try {
+    const userId = await currentUserId();
+    if (!userId) return { ok: false };
+    const th =
+      typeof targetHandicap === "number" && Number.isFinite(targetHandicap)
+        ? Math.round(targetHandicap)
+        : null;
+    await sql`
+      update users set goal = ${goal}, target_handicap = ${th} where id = ${userId}
+    `;
+    return { ok: true };
+  } catch (err) {
+    console.error("setUserGoal() failed:", err);
+    return { ok: false };
   }
 }
 
@@ -484,6 +642,39 @@ export async function signOut(): Promise<{ ok: boolean }> {
   const c = await cookies();
   c.delete(SESSION_COOKIE);
   return { ok: true };
+}
+
+/**
+ * Wipe a player's training history for a clean slate. Deletes coach_sessions
+ * for the signed-in user (from the cookie) AND/OR the anonymous device id.
+ * Useful for testing or when a player wants to start over from zero.
+ */
+export async function resetMyData(
+  clientId?: string
+): Promise<{ ok: boolean; deleted: number; message: string }> {
+  try {
+    const userId = await currentUserId();
+    if (!userId && !clientId) {
+      return { ok: false, deleted: 0, message: "Nothing to reset." };
+    }
+
+    let deleted = 0;
+    if (userId) {
+      const rows =
+        await sql`delete from coach_sessions where user_id = ${userId} returning id`;
+      deleted += rows.length;
+    }
+    if (clientId) {
+      const rows =
+        await sql`delete from coach_sessions where client_id = ${clientId} returning id`;
+      deleted += rows.length;
+    }
+
+    return { ok: true, deleted, message: `Cleared ${deleted} session(s).` };
+  } catch (err) {
+    console.error("resetMyData() failed:", err);
+    return { ok: false, deleted: 0, message: "Couldn't reset your data." };
+  }
 }
 
 function otpEmailHtml(code: string): string {

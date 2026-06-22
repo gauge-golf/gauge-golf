@@ -2,9 +2,46 @@ import crypto from "crypto";
 
 /** Auth shared types + helpers. No "use server" here so we can export sync utils. */
 
+/** Player's primary training goal — a profile-level value set once at signup. */
+export type PlayerGoal =
+  | "consistency"
+  | "lower_handicap"
+  | "distance"
+  | "general";
+
+/** Goal options for the registration UI (label + short description). */
+export const GOAL_OPTIONS: {
+  value: PlayerGoal;
+  label: string;
+  description: string;
+}[] = [
+  {
+    value: "consistency",
+    label: "Consistency",
+    description: "Stable, repeatable strikes with every club.",
+  },
+  {
+    value: "lower_handicap",
+    label: "Lower Handicap",
+    description: "Train to drop your number.",
+  },
+  {
+    value: "distance",
+    label: "Distance",
+    description: "More power on mid and long clubs.",
+  },
+  {
+    value: "general",
+    label: "General Practice",
+    description: "Stay sharp across the bag.",
+  },
+];
+
 export type AuthUser = {
   id: string; // friendly id, e.g. GG-48291
   email: string;
+  goal?: PlayerGoal | null;
+  targetHandicap?: number | null;
 };
 
 export const SESSION_COOKIE = "gg_session";
