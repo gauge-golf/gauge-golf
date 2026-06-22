@@ -799,18 +799,32 @@ export function Coach() {
               <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {PRACTICE_TYPES.map((p) => {
                   const Icon = p.icon;
+                  const comingSoon = p.key !== "driving-range";
                   return (
                     <button
                       key={p.key}
                       onClick={() => setType(p)}
-                      className="group flex items-start gap-4 rounded-[18px] border border-white/15 bg-white/[0.02] p-5 text-left transition hover:border-gold hover:bg-white/[0.04] active:translate-y-px"
+                      disabled={comingSoon}
+                      aria-disabled={comingSoon}
+                      className={`group flex items-start gap-4 rounded-[18px] border p-5 text-left transition ${
+                        comingSoon
+                          ? "cursor-not-allowed border-white/10 bg-white/[0.01] opacity-50"
+                          : "border-white/15 bg-white/[0.02] hover:border-gold hover:bg-white/[0.04] active:translate-y-px"
+                      }`}
                     >
                       <span className="flex size-11 shrink-0 items-center justify-center rounded-[12px] border border-white/15 bg-ink-3 text-gold transition group-hover:border-gold/50">
                         <Icon className="size-5" strokeWidth={2} />
                       </span>
                       <span className="flex flex-col">
-                        <span className="font-display text-[17px] font-bold leading-tight tracking-wide">
-                          {p.title}
+                        <span className="flex items-center gap-2">
+                          <span className="font-display text-[17px] font-bold leading-tight tracking-wide">
+                            {p.title}
+                          </span>
+                          {comingSoon && (
+                            <span className="rounded-full border border-gold/30 bg-gold/[0.08] px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-gold">
+                              Coming Soon
+                            </span>
+                          )}
                         </span>
                         <span className="mt-1 text-[13px] leading-snug text-white/50">
                           {p.desc}
