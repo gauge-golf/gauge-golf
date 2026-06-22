@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -20,6 +20,8 @@ import {
   saveSession,
   updateSessionFeeling,
   getCoachProgress,
+  getCurrentUser,
+  signOut,
 } from "@/app/actions";
 import type {
   CoachReport,
@@ -27,6 +29,8 @@ import type {
   CoachProgress,
   ClubStatRecord,
 } from "@/lib/coach";
+import type { AuthUser } from "@/lib/auth";
+import { SaveProgressCard } from "./coach-auth";
 
 /* ───────── Data model ───────── */
 
@@ -316,6 +320,39 @@ export function Coach() {
   const [progress, setProgress] = useState<CoachProgress | null>(null);
   const [shareError, setShareError] = useState<string | null>(null);
 
+  // Auth (passwordless) + returning-user dashboard
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [dashboard, setDashboard] = useState<CoachProgress | null>(null);
+
+  // Auto sign-in via secure cookie, then load the returning-user dashboard.
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const u = await getCurrentUser();
+      if (!active || !u) return;
+      setUser(u);
+      const prog = await getCoachProgress(getClientId(), undefined, u.id);
+      if (active) setDashboard(prog);
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  async function handleSignedIn(u: AuthUser) {
+    setUser(u);
+    // Refresh progress now scoped to the user (includes just-linked history).
+    const prog = await getCoachProgress(getClientId(), savedSessionId ?? undefined, u.id);
+    setProgress(prog);
+    setDashboard(prog);
+  }
+
+  async function handleSignOut() {
+    await signOut();
+    setUser(null);
+    setDashboard(null);
+  }
+
   const result =
     type && option
       ? { practiceType: type.label, [type.optionKey]: option.value }
@@ -426,8 +463,9 @@ export function Coach() {
     const savedId = save.ok ? save.id ?? null : null;
     setSavedSessionId(savedId);
 
-    const prog = await getCoachProgress(clientId, savedId ?? undefined);
+    const prog = await getCoachProgress(clientId, savedId ?? undefined, user?.id);
     setProgress(prog);
+    if (user) setDashboard(prog);
 
     setLoadingReport(false);
   }
@@ -624,23 +662,34 @@ export function Coach() {
                       : "Ready"}
             </span>
           </div>
-          {((type && !result) || started) && (
-            <button
-              onClick={() =>
-                inSession
-                  ? setStepIndex(null)
-                  : started
-                    ? setStarted(false)
-                    : option
-                      ? setOption(null)
-                      : setType(null)
-              }
-              className="inline-flex items-center gap-2 font-display text-[12px] font-bold uppercase tracking-[0.14em] text-white/60 transition hover:text-white"
-            >
-              <ArrowLeft className="size-3.5" strokeWidth={2.5} />
-              Back
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            {((type && !result) || started) && (
+              <button
+                onClick={() =>
+                  inSession
+                    ? setStepIndex(null)
+                    : started
+                      ? setStarted(false)
+                      : option
+                        ? setOption(null)
+                        : setType(null)
+                }
+                className="inline-flex items-center gap-2 font-display text-[12px] font-bold uppercase tracking-[0.14em] text-white/60 transition hover:text-white"
+              >
+                <ArrowLeft className="size-3.5" strokeWidth={2.5} />
+                Back
+              </button>
+            )}
+            {user && (
+              <button
+                onClick={handleSignOut}
+                title="Sign out"
+                className="inline-flex items-center gap-1.5 rounded-full border border-gold/30 bg-gold/[0.06] px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-gold transition hover:bg-gold/[0.12]"
+              >
+                {user.id}
+              </button>
+            )}
+          </div>
         </header>
 
         <div
@@ -653,6 +702,65 @@ export function Coach() {
           {/* STEP 1 — Practice type */}
           {!type && (
             <section>
+              {/* Returning-user dashboard */}
+              {user && dashboard && dashboard.totalSessions > 0 && (
+                <div className="mb-8 rounded-[18px] border border-gold/30 bg-gold/[0.04] p-6">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/50">
+                      Welcome back
+                    </span>
+                    <span className="font-display text-[13px] font-bold text-gold">{user.id}</span>
+                  </div>
+                  <div className="mt-4 grid grid-cols-3 gap-3">
+                    <div className="rounded-[12px] bg-white/[0.04] px-3 py-3 text-center">
+                      <span className="flex items-center justify-center gap-1 font-display text-[22px] font-extrabold leading-none">
+                        {dashboard.streakWeeks}
+                        <Flame className="size-4 text-gold" strokeWidth={2.5} />
+                      </span>
+                      <span className="mt-1 block text-[9px] uppercase tracking-[0.12em] text-white/45">
+                        Streak
+                      </span>
+                    </div>
+                    <div className="rounded-[12px] bg-white/[0.04] px-3 py-3 text-center">
+                      <span className="font-display text-[22px] font-extrabold leading-none">
+                        {dashboard.totalSessions}
+                      </span>
+                      <span className="mt-1 block text-[9px] uppercase tracking-[0.12em] text-white/45">
+                        Sessions
+                      </span>
+                    </div>
+                    <div className="rounded-[12px] bg-white/[0.04] px-3 py-3 text-center">
+                      <span className="font-display text-[22px] font-extrabold leading-none">
+                        {dashboard.totalBalls.toLocaleString()}
+                      </span>
+                      <span className="mt-1 block text-[9px] uppercase tracking-[0.12em] text-white/45">
+                        Balls
+                      </span>
+                    </div>
+                  </div>
+                  {(dashboard.recordsByClub["DR"] || dashboard.mostConsistentClub) && (
+                    <div className="mt-3 grid grid-cols-2 gap-3">
+                      {dashboard.recordsByClub["DR"] ? (
+                        <div className="flex items-center justify-between rounded-[12px] bg-white/[0.04] px-4 py-3">
+                          <span className="text-[12px] text-white/55">Longest Driver</span>
+                          <span className="font-display text-[15px] font-extrabold text-gold">
+                            {dashboard.recordsByClub["DR"]} m
+                          </span>
+                        </div>
+                      ) : null}
+                      {dashboard.mostConsistentClub ? (
+                        <div className="flex items-center justify-between rounded-[12px] bg-white/[0.04] px-4 py-3">
+                          <span className="text-[12px] text-white/55">Most Consistent</span>
+                          <span className="font-display text-[15px] font-extrabold text-gold">
+                            {dashboard.mostConsistentClub}
+                          </span>
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <h1 className="font-display text-[clamp(34px,8vw,56px)] font-extrabold uppercase leading-[0.95] tracking-[-0.02em]">
                 What are you<br />
                 <span className="text-gold">working on?</span>
@@ -1205,6 +1313,19 @@ export function Coach() {
                       <p className="mt-2 text-[13px] text-red-400">{shareError}</p>
                     )}
                   </div>
+
+                  {/* Registration — only after value is delivered */}
+                  {user ? (
+                    <div className="flex items-center justify-between rounded-[18px] border border-gold/30 bg-gold/[0.04] px-5 py-4">
+                      <span className="text-[14px] text-white/70">
+                        Saved to{" "}
+                        <span className="font-display font-bold text-gold">{user.id}</span>
+                      </span>
+                      <Check className="size-4 text-gold" strokeWidth={3} />
+                    </div>
+                  ) : (
+                    <SaveProgressCard clientId={getClientId()} onSignedIn={handleSignedIn} />
+                  )}
 
                   {/* Secondary — detailed per-club breakdown */}
                   <details className="rounded-[18px] border border-white/15 bg-white/[0.02] p-6">

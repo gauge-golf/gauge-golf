@@ -50,11 +50,13 @@ export type SaveSessionInput = {
   clubStats: Record<string, ClubStatRecord>;
 };
 
-/** Aggregated, cross-session progress for one device. */
+/** Aggregated, cross-session progress for one device or user. */
 export type CoachProgress = {
   totalSessions: number;
   totalBalls: number;
   streakWeeks: number;
   /** Best distance ever recorded per club (m), EXCLUDING the current session. */
   recordsByClub: Record<string, number>;
+  /** Most consistent club across all history (highest avg center %), or null. */
+  mostConsistentClub: string | null;
 };
