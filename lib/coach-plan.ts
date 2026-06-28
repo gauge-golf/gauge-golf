@@ -285,6 +285,7 @@ export type ClubStats = {
   shots: number;
   averageDistance: number;
   bestDistance: number;
+  stdDev: number;
   outShots: number;
   leftPct: number;
   centerPct: number;
@@ -314,12 +315,19 @@ export function computeStats(shots: Shot[]): Record<string, ClubStats> {
     const center = list.filter((s) => s.direction === "Center").length;
     const right = list.filter((s) => s.direction === "Right").length;
 
+    const avg = numeric.length
+      ? Math.round(numeric.reduce((a, b) => a + b, 0) / numeric.length)
+      : 0;
+    const variance =
+      numeric.length > 1
+        ? numeric.reduce((acc, d) => acc + (d - avg) ** 2, 0) / numeric.length
+        : 0;
+
     stats[club] = {
       shots: total,
-      averageDistance: numeric.length
-        ? Math.round(numeric.reduce((a, b) => a + b, 0) / numeric.length)
-        : 0,
+      averageDistance: avg,
       bestDistance: numeric.length ? Math.max(...numeric) : 0,
+      stdDev: Math.round(Math.sqrt(variance)),
       outShots,
       leftPct: pct(left, total),
       centerPct: pct(center, total),

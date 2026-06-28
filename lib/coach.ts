@@ -59,9 +59,23 @@ export type SessionFeeling = "weak" | "normal" | "strong" | "very_strong";
 
 /** Per-club stats persisted with a session (club abbreviation -> values). */
 export type ClubStatRecord = {
-  best: number; // best distance this session (m)
+  best: number;   // best distance this session (m)
   center: number; // center-hit percentage
   shots: number;
+  avg?: number;   // average distance this session (m)
+  stdDev?: number; // within-session shot distance std deviation (m)
+};
+
+/** Aggregated per-club profile built silently across all sessions (Yardage Book). */
+export type ClubProfileRecord = {
+  clubKey: string;    // club abbreviation, e.g. "7I", "DR"
+  avgDistance: number;  // m, weighted rolling average
+  reliableDist: number; // m, conservative carry (avg minus spread)
+  personalBest: number; // m, all-time best
+  accuracy: number;     // %, weighted center-hit average
+  dispersion: number;   // m, average within-session std deviation
+  sessionCount: number;
+  lastUpdated: string;  // ISO timestamp
 };
 
 export type SaveSessionInput = {

@@ -626,7 +626,7 @@ export function Coach() {
     // cross-session progress + prior records so we can flag new personal records.
     const clubStats: Record<string, ClubStatRecord> = {};
     for (const [club, s] of Object.entries(stats)) {
-      clubStats[club] = { best: s.bestDistance, center: s.centerPct, shots: s.shots };
+      clubStats[club] = { best: s.bestDistance, center: s.centerPct, shots: s.shots, avg: s.averageDistance, stdDev: s.stdDev };
     }
     const clientId = getClientId();
     const save = await saveSession({

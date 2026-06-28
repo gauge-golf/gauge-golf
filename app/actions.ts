@@ -12,6 +12,8 @@ import type {
   SessionFeeling,
   CoachProgress,
   SessionHistoryItem,
+  ClubProfileRecord,
+  ClubStatRecord,
 } from "@/lib/coach";
 import type { AuthUser, PlayerGoal } from "@/lib/auth";
 import {
@@ -171,12 +173,33 @@ export async function generateAdaptivePlan(input: {
       date: r.created_at,
     }));
 
+    // Fetch the player's accumulated yardage book (one row per club).
+    const profileRows = await sql`
+      select club_key, avg_distance, reliable_dist, personal_best, accuracy, dispersion, session_count
+      from club_profiles
+      where user_id = ${userId}
+      order by last_updated_at desc
+    `;
+    const yardageBook = profileRows.map((r) => ({
+      club: r.club_key,
+      avg: Number(r.avg_distance) || null,
+      reliable: Number(r.reliable_dist) || null,
+      best: Number(r.personal_best) || null,
+      accuracy: Number(r.accuracy) || null,
+      dispersion: Number(r.dispersion) || null,
+      sessions: Number(r.session_count) || 0,
+    }));
+    const yardageBookLine = yardageBook.length
+      ? `\nPlayer's Yardage Book (aggregated from all sessions — avg/reliable/best in metres):\n${JSON.stringify(yardageBook, null, 2)}`
+      : "";
+
     const systemPrompt = `You are an elite golf coach building the NEXT practice plan for a returning player, using their recent session history.
 
 You are given:
 - The eligible club keys for this session (use ONLY these).
 - The total number of balls to distribute (the sum MUST equal this exactly).
 - The player's recent sessions: scores, the ONE limitation you previously identified, the goal you set, and per-club stats (best distance, center-hit %, shots).
+- The player's Yardage Book (when available): per-club averages built from ALL sessions. Use avg for realistic targets, reliable for conservative goals, accuracy and dispersion to identify which clubs need the most work.
 
 Return ONLY valid JSON in this exact shape:
 {
@@ -207,6 +230,8 @@ RULES:
 - drills: return 2 or 3 practical drills max.
 - clubGuides: include 1 guide per club in the final plan. balls should match that club's plan count.
 - clubGuides.goal/focus/avoid should be practical, concise, and specific.
+- When the Yardage Book is provided, use reliable_dist (not personal best) to set realistic distance goals in clubGuides.
+- Clubs with low accuracy (<60%) or high dispersion (>15m) are priority targets for extra reps.
 - Never mention clubs outside eligible keys.
 - Keep wording short enough that the full brief is skimmable in under 20 seconds.`;
 
@@ -223,7 +248,7 @@ Eligible club keys: ${input.clubs.join(", ")}
 Total balls to distribute (sum must equal this): ${input.totalBalls}
 
 Recent sessions (most recent first):
-${JSON.stringify(history, null, 2)}
+${JSON.stringify(history, null, 2)}${yardageBookLine}
 
 Build the adaptive plan.`;
 
@@ -444,10 +469,142 @@ export async function saveSession(
          ${input.nextGoal}, ${JSON.stringify(input.clubStats)}, ${userAgent}, ${referer})
       returning id
     `;
+
+    // Silently update the player's per-club yardage profiles in the background.
+    await upsertClubProfiles(input.clubStats, userId, input.clientId);
+
     return { ok: true, id: Number(rows[0]?.id) };
   } catch (err) {
     console.error("saveSession() failed:", err);
     return { ok: false };
+  }
+}
+
+/**
+ * Upsert the player's per-club yardage profile from a single session's stats.
+ * Uses a weighted running average so every session improves the accuracy of the data.
+ * profile_key = "user:{id}:{club}" (signed-in) | "anon:{clientId}:{club}" (anonymous).
+ */
+async function upsertClubProfiles(
+  clubStats: Record<string, ClubStatRecord>,
+  userId: string | null,
+  clientId: string
+): Promise<void> {
+  const entries = Object.entries(clubStats).filter(([, s]) => s.shots > 0 && (s.best > 0 || (s.avg ?? 0) > 0));
+  if (!entries.length) return;
+
+  const existing = userId
+    ? await sql`
+        select profile_key, avg_distance, personal_best, accuracy, dispersion, session_count, total_shots
+        from club_profiles where user_id = ${userId}
+      `
+    : await sql`
+        select profile_key, avg_distance, personal_best, accuracy, dispersion, session_count, total_shots
+        from club_profiles where client_id = ${clientId} and user_id is null
+      `;
+
+  const prevMap = new Map(existing.map((r) => [r.profile_key as string, r]));
+
+  for (const [clubKey, stat] of entries) {
+    const profileKey = userId
+      ? `user:${userId}:${clubKey}`
+      : `anon:${clientId}:${clubKey}`;
+    const prev = prevMap.get(profileKey);
+
+    const newAvg = stat.avg ?? stat.best;
+    const newBest = stat.best;
+    const newAccuracy = stat.center;
+    const newStdDev = stat.stdDev ?? 0;
+    const newShots = stat.shots;
+
+    let updAvg: number, updBest: number, updAccuracy: number, updDispersion: number;
+    let updSessions: number, updTotalShots: number;
+
+    if (prev) {
+      const oldShots = Number(prev.total_shots) || 0;
+      const oldSessions = Number(prev.session_count) || 1;
+      const combined = oldShots + newShots;
+      updAvg =
+        combined > 0
+          ? Math.round(
+              (Number(prev.avg_distance) * oldShots + newAvg * newShots) / combined
+            )
+          : newAvg;
+      updBest = Math.max(Number(prev.personal_best) || 0, newBest);
+      updAccuracy =
+        combined > 0
+          ? Math.round(
+              (Number(prev.accuracy) * oldShots + newAccuracy * newShots) / combined
+            )
+          : newAccuracy;
+      updDispersion = Math.round(
+        (Number(prev.dispersion) * oldSessions + newStdDev) / (oldSessions + 1)
+      );
+      updSessions = oldSessions + 1;
+      updTotalShots = oldShots + newShots;
+    } else {
+      updAvg = newAvg;
+      updBest = newBest;
+      updAccuracy = newAccuracy;
+      updDispersion = newStdDev;
+      updSessions = 1;
+      updTotalShots = newShots;
+    }
+
+    // reliable_dist = avg minus whichever is larger: actual spread or 8% buffer.
+    const updReliable = Math.max(
+      5,
+      updAvg - Math.max(updDispersion, Math.round(updAvg * 0.08))
+    );
+
+    await sql`
+      insert into club_profiles
+        (profile_key, user_id, client_id, club_key,
+         avg_distance, reliable_dist, personal_best, accuracy, dispersion,
+         session_count, total_shots, last_updated_at)
+      values
+        (${profileKey}, ${userId}, ${clientId}, ${clubKey},
+         ${updAvg}, ${updReliable}, ${updBest}, ${updAccuracy}, ${updDispersion},
+         ${updSessions}, ${updTotalShots}, now())
+      on conflict (profile_key)
+      do update set
+        avg_distance    = ${updAvg},
+        reliable_dist   = ${updReliable},
+        personal_best   = ${updBest},
+        accuracy        = ${updAccuracy},
+        dispersion      = ${updDispersion},
+        session_count   = ${updSessions},
+        total_shots     = ${updTotalShots},
+        last_updated_at = now()
+    `;
+  }
+}
+
+/** Fetch the player's aggregated per-club yardage profiles (Yardage Book data). */
+export async function getClubProfiles(
+  userId: string
+): Promise<ClubProfileRecord[]> {
+  try {
+    const rows = await sql`
+      select club_key, avg_distance, reliable_dist, personal_best,
+             accuracy, dispersion, session_count, last_updated_at
+      from club_profiles
+      where user_id = ${userId}
+      order by last_updated_at desc
+    `;
+    return rows.map((r) => ({
+      clubKey: r.club_key as string,
+      avgDistance: Number(r.avg_distance) || 0,
+      reliableDist: Number(r.reliable_dist) || 0,
+      personalBest: Number(r.personal_best) || 0,
+      accuracy: Number(r.accuracy) || 0,
+      dispersion: Number(r.dispersion) || 0,
+      sessionCount: Number(r.session_count) || 0,
+      lastUpdated: new Date(r.last_updated_at as string).toISOString(),
+    }));
+  } catch (err) {
+    console.error("getClubProfiles() failed:", err);
+    return [];
   }
 }
 
@@ -831,11 +988,13 @@ export async function resetMyData(
       const rows =
         await sql`delete from coach_sessions where user_id = ${userId} returning id`;
       deleted += rows.length;
+      await sql`delete from club_profiles where user_id = ${userId}`;
     }
     if (clientId) {
       const rows =
         await sql`delete from coach_sessions where client_id = ${clientId} returning id`;
       deleted += rows.length;
+      await sql`delete from club_profiles where client_id = ${clientId} and user_id is null`;
     }
 
     return { ok: true, deleted, message: `Cleared ${deleted} session(s).` };
