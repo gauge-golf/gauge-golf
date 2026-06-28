@@ -70,6 +70,7 @@ import {
   formatDuration,
   computeStats,
   mostConsistentClub,
+  computeSessionWins,
 } from "@/lib/coach-plan";
 import type {
   PlanStep,
@@ -636,8 +637,8 @@ export function Coach() {
       durationSecs,
       clubsPracticed: Object.keys(stats).length,
       practiceScore: res.report.practiceScore,
-      primaryLimitation: res.report.primaryLimitation.title,
-      nextGoal: res.report.nextGoal,
+      primaryLimitation: res.report.needsWork,
+      nextGoal: res.report.nextFocus,
       clubStats,
     });
     const savedId = save.ok ? save.id ?? null : null;
@@ -808,29 +809,13 @@ export function Coach() {
     setPlanLoading(false);
   }
 
-  // Derived end-of-session figures (used by Sections 1, 2 and 7).
+  // Derived end-of-session figures for the summary.
   const sessionStats = sessionComplete ? computeStats(shots) : {};
   const clubsPracticed = Object.keys(sessionStats).length;
   const recordsPrior = progress?.recordsByClub ?? {};
-  const consistentClub = mostConsistentClub(sessionStats);
-  const driverBest = sessionStats["DR"]?.bestDistance ?? 0;
-  const driverIsNew =
-    driverBest > 0 && recordsPrior["DR"] != null && driverBest > recordsPrior["DR"];
-  const longestIron = Object.entries(sessionStats)
-    .filter(([club]) => club !== "DR")
-    .reduce<{ club: string; distance: number } | null>(
-      (acc, [club, s]) =>
-        s.bestDistance > (acc?.distance ?? 0) ? { club, distance: s.bestDistance } : acc,
-      null
-    );
-  const newPRs = Object.entries(sessionStats)
-    .filter(
-      ([club, s]) =>
-        s.bestDistance > 0 &&
-        recordsPrior[club] != null &&
-        s.bestDistance > recordsPrior[club]
-    )
-    .map(([club, s]) => ({ club, distance: s.bestDistance }));
+  const wins = sessionComplete
+    ? computeSessionWins(sessionStats, recordsPrior, unit)
+    : [];
 
   return (
     <main className="relative flex min-h-[100svh] flex-col overflow-hidden">
@@ -1715,63 +1700,65 @@ export function Coach() {
                   : "Nice work. Let your coach break it down for you."}
               </p>
 
-              {/* Conditions — captured at session start (impacts ball flight) */}
-              {weather && (
-                <div className="mt-6">
-                  <span className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-white/40">
-                    <Cloud className="size-3" strokeWidth={2.5} />
-                    Conditions
+              {/* 1 — SESSION OVERVIEW (essentials only) */}
+              <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="rounded-[16px] border border-white/15 bg-white/[0.02] px-4 py-4 text-center">
+                  <span className="font-display text-[28px] font-extrabold leading-none">
+                    {shots.length}
                   </span>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {(
-                      [
-                        ["Temp", `${weather.tempC}°C`],
-                        ["Feels", `${weather.apparentC}°C`],
-                        ["Wind", `${weather.windKmh} km/h ${weather.windDir}`],
-                        ["Precip", `${weather.precipMm} mm`],
-                        ["Humidity", `${weather.humidityPct}%`],
-                        ["Pressure", `${weather.pressureHpa} hPa`],
-                        ["UV", `${weather.uvIndex} ${weather.uvLabel}`],
-                      ] as [string, string][]
-                    ).map(([k, v]) => (
-                      <span
-                        key={k}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.02] px-3 py-1.5 text-[11px]"
-                      >
-                        <span className="uppercase tracking-[0.1em] text-white/35">{k}</span>
-                        <span className="font-display font-bold text-white/80">{v}</span>
-                      </span>
-                    ))}
-                  </div>
+                  <span className="mt-1.5 block text-[10px] uppercase tracking-[0.14em] text-white/50">
+                    Balls Hit
+                  </span>
                 </div>
-              )}
+                <div className="rounded-[16px] border border-white/15 bg-white/[0.02] px-4 py-4 text-center">
+                  <span className="font-display text-[22px] font-extrabold leading-none">
+                    {formatDuration(durationSecs)}
+                  </span>
+                  <span className="mt-1.5 block text-[10px] uppercase tracking-[0.14em] text-white/50">
+                    Duration
+                  </span>
+                </div>
+                <div className="rounded-[16px] border border-white/15 bg-white/[0.02] px-4 py-4 text-center">
+                  <span className="font-display text-[28px] font-extrabold leading-none">
+                    {clubsPracticed}
+                  </span>
+                  <span className="mt-1.5 block text-[10px] uppercase tracking-[0.14em] text-white/50">
+                    Clubs
+                  </span>
+                </div>
+                <div className="rounded-[16px] border border-white/15 bg-white/[0.02] px-4 py-4 text-center">
+                  {weather ? (
+                    <>
+                      <span className="flex items-center justify-center gap-1 font-display text-[22px] font-extrabold leading-none">
+                        <Cloud className="size-4 text-gold" strokeWidth={2.5} />
+                        {weather.tempC}°
+                      </span>
+                      <span className="mt-1.5 block text-[10px] uppercase tracking-[0.14em] text-white/50">
+                        {weather.windKmh}km/h {weather.windDir}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="font-display text-[22px] font-extrabold leading-none text-white/40">
+                        —
+                      </span>
+                      <span className="mt-1.5 block text-[10px] uppercase tracking-[0.14em] text-white/50">
+                        Weather
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
 
-              {/* Pre-report: compact summary + coaching CTA */}
+              {/* Pre-report — concise coach summary CTA */}
               {!report && (
                 <>
-                  <div className="mt-8 grid grid-cols-2 gap-3">
-                    <div className="rounded-[16px] border border-white/15 bg-white/[0.02] px-5 py-4">
-                      <span className="block text-[11px] uppercase tracking-[0.14em] text-white/40">
-                        Total Balls
-                      </span>
-                      <span className="font-display text-[26px] font-extrabold">{shots.length}</span>
-                    </div>
-                    <div className="rounded-[16px] border border-white/15 bg-white/[0.02] px-5 py-4">
-                      <span className="block text-[11px] uppercase tracking-[0.14em] text-white/40">
-                        Duration
-                      </span>
-                      <span className="font-display text-[26px] font-extrabold">
-                        {formatDuration(durationSecs)}
-                      </span>
-                    </div>
-                  </div>
-
                   {!loadingReport && (
                     <button
                       onClick={requestReport}
                       className="mt-8 inline-flex w-full items-center justify-center gap-2.5 rounded-full bg-gold px-6 py-4 font-display text-[14px] font-bold uppercase tracking-[0.14em] text-ink transition hover:bg-gold-hi active:translate-y-px"
                     >
-                      Get My Coaching
+                      Get My Summary
                       <ArrowRight className="size-3.5" strokeWidth={2.5} />
                     </button>
                   )}
@@ -1790,232 +1777,170 @@ export function Coach() {
                       {reportError}
                     </div>
                   )}
+
+                  <button
+                    onClick={reset}
+                    className="mt-8 inline-flex items-center gap-2.5 rounded-full border border-white/20 px-6 py-4 font-display text-[13px] font-bold uppercase tracking-[0.14em] transition hover:border-white active:translate-y-px"
+                  >
+                    <RotateCcw className="size-3.5" strokeWidth={2.5} />
+                    Start Over
+                  </button>
                 </>
               )}
 
-              {/* Coaching report */}
+              {/* Post-report — Today's Wins, concise AI summary, continue */}
               {report && (
                 <div className="mt-8 space-y-6">
-                  {/* Section 1 — Session Summary */}
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="rounded-[16px] border border-white/15 bg-white/[0.02] px-4 py-4 text-center">
-                      <span className="font-display text-[30px] font-extrabold leading-none">
-                        {shots.length}
-                      </span>
-                      <span className="mt-1.5 block text-[10px] uppercase tracking-[0.14em] text-white/50">
-                        Balls Hit
-                      </span>
-                    </div>
-                    <div className="rounded-[16px] border border-white/15 bg-white/[0.02] px-4 py-4 text-center">
-                      <span className="font-display text-[26px] font-extrabold leading-none">
-                        {formatDuration(durationSecs)}
-                      </span>
-                      <span className="mt-1.5 block text-[10px] uppercase tracking-[0.14em] text-white/50">
-                        Duration
-                      </span>
-                    </div>
-                    <div className="rounded-[16px] border border-white/15 bg-white/[0.02] px-4 py-4 text-center">
-                      <span className="font-display text-[30px] font-extrabold leading-none">
-                        {clubsPracticed}
-                      </span>
-                      <span className="mt-1.5 block text-[10px] uppercase tracking-[0.14em] text-white/50">
-                        Clubs Practiced
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Section 2 — Personal Records */}
-                  {(driverBest > 0 || longestIron || consistentClub) && (
+                  {/* 2 — TODAY'S WINS */}
+                  {wins.length > 0 && (
                     <div className="rounded-[18px] border border-white/15 bg-white/[0.02] p-6">
                       <h3 className="flex items-center gap-2 font-display text-[16px] font-bold uppercase tracking-wide text-gold">
                         <Trophy className="size-4" strokeWidth={2.5} />
-                        Personal Records
+                        Today&apos;s Wins
                       </h3>
-
-                      {newPRs.length > 0 && (
-                        <div className="mt-4 rounded-[14px] border border-gold/40 bg-gold/[0.08] px-4 py-3 text-[14px] font-bold text-gold">
-                          🏆 New Personal Record —{" "}
-                          {newPRs.map((p) => `${p.club} ${fmtDist(p.distance, unit)}`).join(", ")}
-                        </div>
-                      )}
-
                       <div className="mt-4 space-y-2.5">
-                        {driverBest > 0 && (
-                          <div className="flex items-center justify-between rounded-[12px] bg-white/[0.03] px-4 py-3">
+                        {wins.map((w, i) => (
+                          <div
+                            key={i}
+                            className={`flex items-center justify-between rounded-[12px] px-4 py-3 ${
+                              w.highlight
+                                ? "border border-gold/40 bg-gold/[0.08]"
+                                : "bg-white/[0.03]"
+                            }`}
+                          >
                             <span className="text-[14px] text-white/70">
-                              {driverIsNew ? "🏆 " : ""}Longest Driver
+                              {w.highlight ? "🏆 " : ""}
+                              {w.label}
                             </span>
-                            <span className="font-display text-[18px] font-extrabold text-gold">
-                              {fmtDist(driverBest, unit)}
-                            </span>
-                          </div>
-                        )}
-                        {longestIron && (
-                          <div className="flex items-center justify-between rounded-[12px] bg-white/[0.03] px-4 py-3">
-                            <span className="text-[14px] text-white/70">
-                              Longest {longestIron.club}
-                            </span>
-                            <span className="font-display text-[18px] font-extrabold text-gold">
-                              {fmtDist(longestIron.distance, unit)}
+                            <span className="font-display text-[16px] font-extrabold text-gold">
+                              {w.detail}
                             </span>
                           </div>
-                        )}
-                        {consistentClub && (
-                          <div className="flex items-center justify-between rounded-[12px] bg-white/[0.03] px-4 py-3">
-                            <span className="text-[14px] text-white/70">Most Consistent Club</span>
-                            <span className="font-display text-[18px] font-extrabold text-gold">
-                              {consistentClub.club}
-                            </span>
-                          </div>
-                        )}
+                        ))}
                       </div>
                     </div>
                   )}
 
-                  {/* Section 3 — AI Coaching Feedback */}
+                  {/* 3 — AI SUMMARY (Improved / Needs Work / Next Focus) */}
                   <div className="rounded-[18px] border border-gold/40 bg-gold/[0.05] p-6">
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-gold">
-                        What&apos;s holding you back
+                        Coach Summary
                       </span>
                       <span className="rounded-full border border-gold/40 px-3 py-1 font-display text-[12px] font-bold text-gold">
                         Score {report.practiceScore}
                       </span>
                     </div>
-                    <h2 className="mt-2 font-display text-[24px] font-extrabold leading-tight tracking-tight">
-                      {report.primaryLimitation.title}
-                    </h2>
-                    <p className="mt-3 text-[15px] leading-relaxed text-white/80">
-                      {report.primaryLimitation.explanation}
-                    </p>
+                    <div className="mt-5 space-y-4">
+                      <div className="flex items-start gap-3">
+                        <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-gold/15 text-gold">
+                          <TrendingUp className="size-4" strokeWidth={2.5} />
+                        </span>
+                        <div>
+                          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-gold/80">
+                            Improved
+                          </span>
+                          <p className="mt-0.5 text-[15px] leading-snug text-white/85">
+                            {report.improved}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-white/10 text-white/70">
+                          <Target className="size-4" strokeWidth={2.5} />
+                        </span>
+                        <div>
+                          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-white/50">
+                            Needs Work
+                          </span>
+                          <p className="mt-0.5 text-[15px] leading-snug text-white/85">
+                            {report.needsWork}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-gold/15 text-gold">
+                          <Flag className="size-4" strokeWidth={2.5} />
+                        </span>
+                        <div>
+                          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-gold/80">
+                            Next Focus
+                          </span>
+                          <p className="mt-0.5 text-[15px] leading-snug text-white/85">
+                            {report.nextFocus}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="rounded-[18px] border border-white/15 bg-white/[0.02] p-6">
-                    <h3 className="font-display text-[16px] font-bold uppercase tracking-wide text-gold">
-                      Coaching Principles
-                    </h3>
-                    <ul className="mt-4 space-y-3">
-                      {report.coachingPrinciples.map((principle, i) => (
-                        <li
-                          key={i}
-                          className="flex items-start gap-3 text-[15px] leading-relaxed text-white/85"
-                        >
-                          <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-gold" />
-                          {principle}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* Section 4 — Next Session Goal */}
-                  <div className="rounded-[18px] border border-white/15 bg-white/[0.02] p-6">
-                    <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/40">
-                      Next session goal
-                    </span>
-                    <p className="mt-2 font-display text-[20px] font-bold leading-snug tracking-tight text-gold">
-                      {report.nextGoal}
-                    </p>
-                  </div>
-
-                  {/* Section 5 — How Did This Session Feel? */}
-                  <div className="rounded-[18px] border border-white/15 bg-white/[0.02] p-6">
-                    <h3 className="font-display text-[16px] font-bold uppercase tracking-wide">
-                      How did this session feel?
-                    </h3>
-                    <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                      {FEELINGS.map((f) => {
-                        const active = feeling === f.value;
-                        return (
-                          <button
-                            key={f.value}
-                            onClick={() => chooseFeeling(f.value)}
-                            className={`rounded-[14px] border px-3 py-4 font-display text-[14px] font-bold uppercase tracking-wide transition active:translate-y-px ${
-                              active
-                                ? "border-gold bg-gold text-ink"
-                                : "border-white/15 bg-white/[0.02] text-white hover:border-gold"
-                            }`}
-                          >
-                            {f.label}
-                          </button>
-                        );
-                      })}
+                  {/* Self-assessment — compact, single tap */}
+                  <div className="rounded-[18px] border border-white/15 bg-white/[0.02] px-5 py-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <span className="font-display text-[13px] font-bold uppercase tracking-wide text-white/70">
+                        How did it feel?
+                      </span>
+                      <div className="flex gap-2">
+                        {FEELINGS.map((f) => {
+                          const active = feeling === f.value;
+                          return (
+                            <button
+                              key={f.value}
+                              onClick={() => chooseFeeling(f.value)}
+                              className={`rounded-full border px-3 py-1.5 font-display text-[12px] font-bold uppercase tracking-wide transition active:translate-y-px ${
+                                active
+                                  ? "border-gold bg-gold text-ink"
+                                  : "border-white/15 bg-white/[0.02] text-white/70 hover:border-gold"
+                              }`}
+                            >
+                              {f.label}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                     {feelingSaved && (
-                      <p className="mt-3 flex items-center gap-2 text-[13px] text-white/50">
+                      <p className="mt-2.5 flex items-center gap-2 text-[12px] text-white/50">
                         <Check className="size-3.5 text-gold" strokeWidth={3} />
                         Saved — we&apos;ll track how you progress.
                       </p>
                     )}
                   </div>
 
-                  {/* Section 6 — Progress */}
-                  {progress && (
-                    <div className="rounded-[18px] border border-white/15 bg-white/[0.02] p-6">
-                      <h3 className="flex items-center gap-2 font-display text-[16px] font-bold uppercase tracking-wide">
-                        <TrendingUp className="size-4 text-gold" strokeWidth={2.5} />
-                        Your Progress
-                      </h3>
-                      <div className="mt-4 grid grid-cols-3 gap-3">
-                        <div className="rounded-[14px] bg-white/[0.03] px-3 py-4 text-center">
-                          <span className="flex items-center justify-center gap-1 font-display text-[26px] font-extrabold leading-none">
-                            {progress.streakWeeks}
-                            <Flame className="size-5 text-gold" strokeWidth={2.5} />
-                          </span>
-                          <span className="mt-1.5 block text-[10px] uppercase tracking-[0.14em] text-white/50">
-                            Week Streak
-                          </span>
-                        </div>
-                        <div className="rounded-[14px] bg-white/[0.03] px-3 py-4 text-center">
-                          <span className="font-display text-[26px] font-extrabold leading-none">
-                            {progress.totalSessions}
-                          </span>
-                          <span className="mt-1.5 block text-[10px] uppercase tracking-[0.14em] text-white/50">
-                            Sessions
-                          </span>
-                        </div>
-                        <div className="rounded-[14px] bg-white/[0.03] px-3 py-4 text-center">
-                          <span className="font-display text-[26px] font-extrabold leading-none">
-                            {progress.totalBalls.toLocaleString()}
-                          </span>
-                          <span className="mt-1.5 block text-[10px] uppercase tracking-[0.14em] text-white/50">
-                            Total Balls
-                          </span>
-                        </div>
+                  {/* 4 — CONTINUE */}
+                  <div className="space-y-3">
+                    {user ? (
+                      <div className="flex items-center justify-between rounded-[18px] border border-gold/30 bg-gold/[0.04] px-5 py-4">
+                        <span className="text-[14px] text-white/70">
+                          Saved to{" "}
+                          <span className="font-display font-bold text-gold">{user.displayName ?? user.id}</span>
+                        </span>
+                        <Check className="size-4 text-gold" strokeWidth={3} />
                       </div>
-                      <p className="mt-4 text-[12px] leading-snug text-white/40">
-                        Handicap goal progress coming soon.
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Section 7 — Share Card */}
-                  <div>
-                    <button
-                      onClick={shareProgress}
-                      className="inline-flex w-full items-center justify-center gap-2.5 rounded-full border border-gold/50 bg-gold/[0.06] px-6 py-4 font-display text-[14px] font-bold uppercase tracking-[0.14em] text-gold transition hover:bg-gold/[0.12] active:translate-y-px"
-                    >
-                      <Share2 className="size-4" strokeWidth={2.5} />
-                      Share Progress
-                    </button>
-                    {shareError && (
-                      <p className="mt-2 text-[13px] text-red-400">{shareError}</p>
+                    ) : (
+                      <SaveProgressCard clientId={getClientId()} onSignedIn={handleSignedIn} />
                     )}
+
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <button
+                        onClick={shareProgress}
+                        className="inline-flex items-center justify-center gap-2.5 rounded-full border border-gold/50 bg-gold/[0.06] px-6 py-4 font-display text-[14px] font-bold uppercase tracking-[0.14em] text-gold transition hover:bg-gold/[0.12] active:translate-y-px"
+                      >
+                        <Share2 className="size-4" strokeWidth={2.5} />
+                        Share Results
+                      </button>
+                      <button
+                        onClick={reset}
+                        className="inline-flex items-center justify-center gap-2.5 rounded-full bg-gold px-6 py-4 font-display text-[14px] font-bold uppercase tracking-[0.14em] text-ink transition hover:bg-gold-hi active:translate-y-px"
+                      >
+                        <RotateCcw className="size-4" strokeWidth={2.5} />
+                        Start Another Session
+                      </button>
+                    </div>
+                    {shareError && <p className="text-[13px] text-red-400">{shareError}</p>}
                   </div>
 
-                  {/* Registration — only after value is delivered */}
-                  {user ? (
-                    <div className="flex items-center justify-between rounded-[18px] border border-gold/30 bg-gold/[0.04] px-5 py-4">
-                      <span className="text-[14px] text-white/70">
-                        Saved to{" "}
-                        <span className="font-display font-bold text-gold">{user.displayName ?? user.id}</span>
-                      </span>
-                      <Check className="size-4 text-gold" strokeWidth={3} />
-                    </div>
-                  ) : (
-                    <SaveProgressCard clientId={getClientId()} onSignedIn={handleSignedIn} />
-                  )}
-
-                  {/* Secondary — detailed per-club breakdown */}
+                  {/* Secondary — detailed per-club breakdown (collapsed) */}
                   <details className="rounded-[18px] border border-white/15 bg-white/[0.02] p-6">
                     <summary className="cursor-pointer font-display text-[14px] font-bold uppercase tracking-wide text-white/60 transition hover:text-white">
                       View detailed stats
@@ -2051,14 +1976,6 @@ export function Coach() {
                   </details>
                 </div>
               )}
-
-              <button
-                onClick={reset}
-                className="mt-8 inline-flex items-center gap-2.5 rounded-full border border-white/20 px-6 py-4 font-display text-[13px] font-bold uppercase tracking-[0.14em] transition hover:border-white active:translate-y-px"
-              >
-                <RotateCcw className="size-3.5" strokeWidth={2.5} />
-                Start Over
-              </button>
             </section>
           )}
         </div>

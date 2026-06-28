@@ -350,3 +350,74 @@ export function mostConsistentClub(
   }
   return best;
 }
+
+/** A meaningful achievement to celebrate at the end of a session. */
+export type SessionWin = {
+  label: string;
+  detail: string;
+  highlight: boolean; // gold emphasis for genuinely new records
+};
+
+/**
+ * Pick the session's most meaningful wins for the summary. Prioritises genuine
+ * new personal bests, then the longest drive and most consistent club. Always
+ * returns at least one win (the session's standout club) so there is something
+ * to celebrate even when no records fall.
+ */
+export function computeSessionWins(
+  stats: Record<string, ClubStats>,
+  priorRecords: Record<string, number>,
+  unit: Unit
+): SessionWin[] {
+  const wins: SessionWin[] = [];
+  const newPRClubs = new Set<string>();
+
+  for (const [club, s] of Object.entries(stats)) {
+    if (
+      s.bestDistance > 0 &&
+      priorRecords[club] != null &&
+      s.bestDistance > priorRecords[club]
+    ) {
+      newPRClubs.add(club);
+      wins.push({
+        label: "New Personal Best",
+        detail: `${club} ${fmtDist(s.bestDistance, unit)}`,
+        highlight: true,
+      });
+    }
+  }
+
+  const driver = stats["DR"];
+  if (driver && driver.bestDistance > 0 && !newPRClubs.has("DR")) {
+    wins.push({
+      label: "Longest Drive",
+      detail: fmtDist(driver.bestDistance, unit),
+      highlight: false,
+    });
+  }
+
+  const consistent = mostConsistentClub(stats);
+  if (consistent && consistent.centerPct > 0) {
+    wins.push({
+      label: "Most Consistent",
+      detail: `${consistent.club} · ${consistent.centerPct}% centered`,
+      highlight: false,
+    });
+  }
+
+  // Always celebrate something: the session's standout club by accuracy.
+  if (!wins.length) {
+    const standout = Object.entries(stats)
+      .filter(([, s]) => s.shots >= 2 && s.averageDistance > 0)
+      .sort((a, b) => b[1].centerPct - a[1].centerPct)[0];
+    if (standout) {
+      wins.push({
+        label: "Today's Highlight",
+        detail: `${standout[0]} · ${standout[1].centerPct}% centered`,
+        highlight: false,
+      });
+    }
+  }
+
+  return wins.slice(0, 4);
+}

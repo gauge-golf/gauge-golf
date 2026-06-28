@@ -14,17 +14,14 @@ export type CoachReportPayload = {
 };
 
 /**
- * A coaching report — written like a personal coach, not a stats dashboard.
- * It explains WHY the session went the way it did and WHAT to focus on next.
+ * A coaching summary — written to be read in under 15 seconds. Answers the only
+ * question that matters at the end of a session: "Did I get better today?"
  */
 export type CoachReport = {
   practiceScore: number; // 0–100 overall session quality
-  primaryLimitation: {
-    title: string; // the single biggest limiter, e.g. "Open clubface at impact"
-    explanation: string; // why it's happening, in plain language
-  };
-  coachingPrinciples: string[]; // 3–5 coaching-concept tips (no stats)
-  nextGoal: string; // one specific, measurable objective
+  improved: string;      // what got better today (or the clearest strength shown)
+  needsWork: string;     // the single biggest thing holding the player back
+  nextFocus: string;     // one concrete focus for the next session
 };
 
 export type CoachReportState =

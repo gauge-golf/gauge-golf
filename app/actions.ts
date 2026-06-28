@@ -5,6 +5,7 @@ import { Resend } from "resend";
 import { sql } from "@/lib/db";
 import type {
   CoachReportPayload,
+  CoachReport,
   CoachReportState,
   AdaptivePlanState,
   AdaptiveClubGuide,
@@ -396,32 +397,28 @@ export async function analyzeSession(
       if (goal) {
         goalLine = `\nThe player's PRIMARY goal is: ${goal}${
           th ? ` (target handicap ${th})` : ""
-        }. Make the nextGoal and feedback push them toward this.`;
+        }. Make nextFocus and the feedback push them toward this.`;
       }
     }
 
-    const systemPrompt = `You are an elite golf coach giving a player personal feedback after a driving-range session. You speak like a real coach drawing on classic golf instruction (Hogan, Penick, Pelz) — focused on cause and effect, not numbers.
+    const systemPrompt = `You are an elite golf coach giving a player a SHORT, scannable summary after a driving-range session. The player must understand in under 15 seconds what improved, what needs work, and what to focus on next. You draw on classic golf instruction (Hogan, Penick, Pelz) — focused on cause and effect.
 
 Return ONLY valid JSON in this exact shape:
 {
   "practiceScore": 0-100,
-  "primaryLimitation": {
-    "title": "Short name of the ONE biggest limiter",
-    "explanation": "2-3 sentences explaining WHY it is happening and how it costs strokes."
-  },
-  "coachingPrinciples": [
-    "3 to 5 coaching principles"
-  ],
-  "nextGoal": "One specific, measurable objective for the next session."
+  "improved": "One short sentence: what improved today, or the clearest strength they showed.",
+  "needsWork": "One short sentence: the single biggest thing holding them back.",
+  "nextFocus": "One short sentence: one concrete focus for the next session."
 }
 
 RULES:
 - practiceScore: an honest 0-100 reflecting consistency, strike and control this session.
-- primaryLimitation: identify exactly ONE root issue (e.g. directional control with longer clubs, open clubface at impact, inconsistent strike, poor distance control, tempo inconsistency, over-swinging). Explain the WHY, never just restate stats.
-- coachingPrinciples: 3-5 short, memorable principles like a great coach would say. Do NOT mention any percentages, numbers, or raw statistics here. Make them feel personal to this session.
-- nextGoal: exactly ONE measurable goal, ideally using a club from the player's bag.
+- improved, needsWork, nextFocus: EACH must be a single sentence, ideally under 14 words. The whole report must be readable in under 15 seconds.
+- improved: a real win with cause and effect (e.g. "PW contact got cleaner — more centered strikes"). A concrete number is fine if it makes the win tangible.
+- needsWork: identify exactly ONE root issue (e.g. driver dispersion, open clubface, distance control), never a list.
+- nextFocus: one actionable, measurable focus that builds on today, ideally naming a club from the player's bag.
 - The player's bag lists the ONLY clubs they own — never reference a club they don't have.
-- Tone: encouraging, direct, insightful. The player should think "I learned something useful", not "another stats report".`;
+- Tone: encouraging, direct, insightful. The player should think "I know exactly what to do next", not "another stats report".`;
 
     const w = payload.weather;
     const weatherLine = w
@@ -436,7 +433,24 @@ They hit ${payload.totalBalls} balls over ${Math.round((payload.durationSecs ?? 
 Give your coaching report.`;
 
     const response = await callOpenAI(systemPrompt, userPrompt);
-    const report = JSON.parse(response.trim());
+    const parsed = JSON.parse(response.trim());
+
+    // Coerce + fall back so the summary never renders blank.
+    const report: CoachReport = {
+      practiceScore: Math.max(0, Math.min(100, Math.round(Number(parsed.practiceScore) || 0))),
+      improved:
+        typeof parsed.improved === "string" && parsed.improved.trim()
+          ? parsed.improved.trim()
+          : "You kept a steady rhythm and committed to every shot.",
+      needsWork:
+        typeof parsed.needsWork === "string" && parsed.needsWork.trim()
+          ? parsed.needsWork.trim()
+          : "Tighten contact consistency on your longer clubs.",
+      nextFocus:
+        typeof parsed.nextFocus === "string" && parsed.nextFocus.trim()
+          ? parsed.nextFocus.trim()
+          : "Pick one club and groove a repeatable tempo next session.",
+    };
 
     return { ok: true, report };
   } catch (err) {
