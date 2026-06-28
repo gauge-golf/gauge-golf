@@ -34,17 +34,63 @@ export const STEP_LABELS: {
 export const OUT = "Out" as const;
 export type DistanceResult = number | typeof OUT;
 
+/* ───────── Units (display only — storage is always metres) ───────── */
+
+export type Unit = "yd" | "m";
+export const DEFAULT_UNIT: Unit = "yd";
+const M_PER_YD = 0.9144;
+
+/** Convert a stored metre value into the player's display unit (rounded). */
+export function mToUnit(meters: number, unit: Unit): number {
+  return unit === "m" ? Math.round(meters) : Math.round(meters / M_PER_YD);
+}
+
+/** Convert a display-unit value back into stored metres (rounded). */
+export function unitToM(value: number, unit: Unit): number {
+  return unit === "m" ? Math.round(value) : Math.round(value * M_PER_YD);
+}
+
+/** Format a stored metre value for display, e.g. "153 yd". */
+export function fmtDist(meters: number, unit: Unit): string {
+  return `${mToUnit(meters, unit)} ${unit}`;
+}
+
 /**
- * Distance result options (m) scaled to the club's target, in 5 m steps.
- * A wedge offers ~10–110 m; a driver offers ~180–280 m. Prevents the old
- * one-size-fits-all 30–130 m list that capped the driver far too low.
+ * Quick distance presets (in the display unit) centred on the club's target.
+ * Five chips in 5-unit steps cover the common spread; manual entry handles
+ * anything outside the range, so every club supports any realistic distance.
  */
-export function distanceOptions(target: number): number[] {
-  const min = Math.max(5, Math.round((target - 50) / 5) * 5);
-  const max = Math.round((target + 50) / 5) * 5;
-  const out: number[] = [];
-  for (let d = min; d <= max; d += 5) out.push(d);
-  return out;
+export function distancePresets(targetMeters: number, unit: Unit): number[] {
+  const target = mToUnit(targetMeters, unit);
+  const center = Math.round(target / 5) * 5;
+  return [center - 10, center - 5, center, center + 5, center + 10].filter(
+    (d) => d >= 5
+  );
+}
+
+/** Total balls planned across every step. */
+export function totalBalls(plan: PlanStep[]): number {
+  return plan.reduce((acc, s) => acc + s.balls, 0);
+}
+
+/**
+ * Map a 0-based global shot index onto its plan slot. Position is derived from
+ * how many shots have been logged, so a player can never accidentally skip a
+ * shot and Undo simply removes the last entry. Returns null once the plan is
+ * complete.
+ */
+export function locateShot(
+  plan: PlanStep[],
+  shotIndex: number
+): { stepIndex: number; shotNum: number } | null {
+  let acc = 0;
+  for (let i = 0; i < plan.length; i++) {
+    if (shotIndex < acc + plan[i].balls) {
+      return { stepIndex: i, shotNum: shotIndex - acc + 1 };
+    }
+    acc += plan[i].balls;
+  }
+  return null;
 }
 
 /** Direction options. */

@@ -22,6 +22,10 @@ import {
   Cloud,
   History,
   ChevronDown,
+  Undo2,
+  Minus,
+  Plus,
+  X,
 } from "lucide-react";
 import {
   analyzeSession,
@@ -45,13 +49,17 @@ import type {
 import type { AuthUser } from "@/lib/auth";
 import { SaveProgressCard } from "./coach-auth";
 import {
-  STEP_LABELS,
   BAG_CLUBS,
   OUT,
   DIRECTIONS,
   DEFAULT_DIRECTION,
+  DEFAULT_UNIT,
   FEELINGS,
-  distanceOptions,
+  distancePresets,
+  mToUnit,
+  unitToM,
+  fmtDist,
+  locateShot,
   clubAbbr,
   buildDrivingRangePlan,
   buildWarmUpPlan,
@@ -64,7 +72,7 @@ import {
 } from "@/lib/coach-plan";
 import type {
   PlanStep,
-  DistanceResult,
+  Unit,
   Direction,
   Shot,
 } from "@/lib/coach-plan";
@@ -168,12 +176,24 @@ export function Coach() {
   // My Bag — clubs the user actually owns (defaults to all).
   const [bag, setBag] = useState<string[]>(BAG_CLUBS.map((c) => c.key));
 
-  // Session (shot-by-shot logging)
-  const [stepIndex, setStepIndex] = useState<number | null>(null); // null = not in session
-  const [shotNum, setShotNum] = useState(1); // 1-based within current club
-  const [distance, setDistance] = useState<DistanceResult>(STEP_LABELS[0].target);
+  // Display unit (yards by default; metres available in Settings). Display-only
+  // — every distance is always stored in metres.
+  const [unit, setUnit] = useState<Unit>(DEFAULT_UNIT);
+
+  // Session (shot-by-shot logging). The current position is DERIVED from
+  // shots.length, so a shot can never be accidentally skipped and Undo simply
+  // drops the last entry.
+  const [inSession, setInSession] = useState(false);
+  const [distanceField, setDistanceField] = useState(""); // display-unit text
+  const [isOut, setIsOut] = useState(false);
   const [direction, setDirection] = useState<Direction>(DEFAULT_DIRECTION);
   const [shots, setShots] = useState<Shot[]>([]);
+
+  // Editing a previously logged shot (null = closed).
+  const [editIndex, setEditIndex] = useState<number | null>(null);
+  const [editField, setEditField] = useState("");
+  const [editIsOut, setEditIsOut] = useState(false);
+  const [editDirection, setEditDirection] = useState<Direction>(DEFAULT_DIRECTION);
 
   // Session timing
   const [startedAt, setStartedAt] = useState<number | null>(null);
@@ -221,6 +241,18 @@ export function Coach() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [history, setHistory] = useState<SessionHistoryItem[]>([]);
+
+  // Persisted display unit.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = localStorage.getItem("gg_unit");
+    if (saved === "yd" || saved === "m") setUnit(saved);
+  }, []);
+
+  function changeUnit(next: Unit) {
+    setUnit(next);
+    if (typeof window !== "undefined") localStorage.setItem("gg_unit", next);
+  }
 
   // Auto sign-in via secure cookie, then load the returning-user dashboard.
   useEffect(() => {
@@ -353,9 +385,11 @@ export function Coach() {
   // startSession); everyone else uses the hardcoded base plan.
   const plan = aiPlan ?? basePlan;
 
-  const inSession = stepIndex !== null;
-  const currentStep = inSession && plan[stepIndex] ? plan[stepIndex] : null;
-  const sessionComplete = inSession && !currentStep;
+  const pos = inSession ? locateShot(plan, shots.length) : null;
+  const stepIndex = pos?.stepIndex ?? null;
+  const shotNum = pos?.shotNum ?? 1;
+  const currentStep = pos ? plan[pos.stepIndex] : null;
+  const sessionComplete = inSession && pos === null;
 
   // Live session timer — ticks every second while the session is in progress.
   const sessionRunning = inSession && !sessionComplete && startedAt !== null;
@@ -389,9 +423,19 @@ export function Coach() {
     );
   }
 
-  // Live shot object — matches the required Result JSON contract exactly.
+  // Parse the manual distance field (display units) and build the live shot.
+  const fieldNum = parseInt(distanceField, 10);
+  const fieldValid = Number.isFinite(fieldNum) && fieldNum > 0;
+  const canSave = !!currentStep && (isOut || fieldValid);
+
+  // Live shot object — distance is always stored in metres.
   const shot: Shot | null = currentStep
-    ? { club: currentStep.club, target: currentStep.target, distance, direction }
+    ? {
+        club: currentStep.club,
+        target: currentStep.target,
+        distance: isOut ? OUT : unitToM(fieldValid ? fieldNum : 0, unit),
+        direction,
+      }
     : null;
 
   async function startSession() {
@@ -438,33 +482,82 @@ export function Coach() {
       setAiFocusNote(null);
     }
 
-    setStepIndex(0);
-    setShotNum(1);
-    setDistance(effective[0].target);
-    setDirection(DEFAULT_DIRECTION);
     setShots([]);
+    setInSession(true);
+    setDistanceField(String(mToUnit(effective[0].target, unit)));
+    setIsOut(false);
+    setDirection(DEFAULT_DIRECTION);
     setStartedAt(Date.now());
     setDurationSecs(0);
   }
 
   function saveShot() {
-    if (!currentStep || !shot) return;
+    if (!currentStep || !shot || !canSave) return;
+    const nextCount = shots.length + 1;
     setShots((prev) => [...prev, shot]);
 
-    if (isLastShotOfClub) {
-      const next = (stepIndex ?? 0) + 1;
-      // Last shot of the last club ends the session — capture its duration.
-      if (next >= plan.length && startedAt) {
-        setDurationSecs(Math.round((Date.now() - startedAt) / 1000));
-      }
-      setStepIndex(next);
-      setShotNum(1);
-      setDistance(plan[next]?.target ?? STEP_LABELS[0].target);
+    const nextPos = locateShot(plan, nextCount);
+    if (!nextPos) {
+      // Last shot of the last club ends the session — freeze its duration.
+      if (startedAt) setDurationSecs(Math.round((Date.now() - startedAt) / 1000));
     } else {
-      setShotNum((n) => n + 1);
-      setDistance(currentStep.target);
+      setDistanceField(String(mToUnit(plan[nextPos.stepIndex].target, unit)));
     }
+    setIsOut(false);
     setDirection(DEFAULT_DIRECTION);
+  }
+
+  /** Remove the last shot and pre-fill the editor with it for quick re-logging. */
+  function undoLastShot() {
+    if (!shots.length) return;
+    const last = shots[shots.length - 1];
+    setShots((prev) => prev.slice(0, -1));
+    setIsOut(last.distance === OUT);
+    setDistanceField(
+      String(mToUnit(last.distance === OUT ? last.target : last.distance, unit))
+    );
+    setDirection(last.direction);
+  }
+
+  function openEditShot(index: number) {
+    const s = shots[index];
+    if (!s) return;
+    setEditIndex(index);
+    setEditIsOut(s.distance === OUT);
+    setEditField(String(mToUnit(s.distance === OUT ? s.target : s.distance, unit)));
+    setEditDirection(s.direction);
+  }
+
+  function saveEditShot() {
+    if (editIndex === null) return;
+    const n = parseInt(editField, 10);
+    const valid = Number.isFinite(n) && n > 0;
+    if (!editIsOut && !valid) return;
+    setShots((prev) =>
+      prev.map((s, i) =>
+        i === editIndex
+          ? {
+              ...s,
+              distance: editIsOut ? OUT : unitToM(n, unit),
+              direction: editDirection,
+            }
+          : s
+      )
+    );
+    setEditIndex(null);
+  }
+
+  function deleteEditShot() {
+    if (editIndex === null) return;
+    setShots((prev) => prev.filter((_, i) => i !== editIndex));
+    setEditIndex(null);
+  }
+
+  /** Nudge the manual distance by ±5 display units (never below 5). */
+  function adjustDistance(delta: number) {
+    setIsOut(false);
+    const base = fieldValid ? fieldNum : mToUnit(currentStep?.target ?? 0, unit);
+    setDistanceField(String(Math.max(5, base + delta)));
   }
 
   async function requestReport() {
@@ -594,7 +687,7 @@ export function Coach() {
       // Stat rows
       const rows: [string, string][] = [
         ["Session Time", formatDuration(durationSecs)],
-        ["Longest Driver", driverBest ? `${driverBest} m` : "—"],
+        ["Longest Driver", driverBest ? fmtDist(driverBest, unit) : "—"],
         ["Most Consistent", mostConsistent ? mostConsistent.club : "—"],
         ["Current Streak", `${progress?.streakWeeks ?? 0} wk`],
         ["Total Balls Hit", `${(progress?.totalBalls ?? shots.length).toLocaleString()}`],
@@ -653,9 +746,11 @@ export function Coach() {
     setOption(null);
     setStarted(false);
     setBag(BAG_CLUBS.map((c) => c.key));
-    setStepIndex(null);
-    setShotNum(1);
+    setInSession(false);
     setShots([]);
+    setDistanceField("");
+    setIsOut(false);
+    setEditIndex(null);
     setStartedAt(null);
     setDurationSecs(0);
     setWeather(null);
@@ -735,7 +830,7 @@ export function Coach() {
               <button
                 onClick={() =>
                   inSession
-                    ? setStepIndex(null)
+                    ? setInSession(false)
                     : started
                       ? setStarted(false)
                       : option
@@ -867,7 +962,7 @@ export function Coach() {
                         <div className="flex items-center justify-between rounded-[12px] bg-white/[0.04] px-4 py-3">
                           <span className="text-[12px] text-white/55">Longest Driver</span>
                           <span className="font-display text-[15px] font-extrabold text-gold">
-                            {dashboard.recordsByClub["DR"]} m
+                            {fmtDist(dashboard.recordsByClub["DR"], unit)}
                           </span>
                         </div>
                       ) : null}
@@ -1014,6 +1109,29 @@ export function Coach() {
                     </button>
                   );
                 })}
+              </div>
+
+              {/* Units — yards by default, metres optional. Saved on device. */}
+              <div className="mt-8 flex items-center gap-3">
+                <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-white/40">
+                  Distance Units
+                </span>
+                <div className="inline-flex rounded-full border border-white/15 bg-white/[0.02] p-0.5">
+                  {(["yd", "m"] as Unit[]).map((u) => (
+                    <button
+                      key={u}
+                      type="button"
+                      onClick={() => changeUnit(u)}
+                      className={`rounded-full px-4 py-1.5 font-display text-[12px] font-bold uppercase tracking-[0.12em] transition ${
+                        unit === u
+                          ? "bg-gold text-ink"
+                          : "text-white/60 hover:text-white"
+                      }`}
+                    >
+                      {u === "yd" ? "Yards" : "Metres"}
+                    </button>
+                  ))}
+                </div>
               </div>
             </section>
           )}
@@ -1207,7 +1325,7 @@ export function Coach() {
                     Target
                   </span>
                   <p className="mt-1 font-display text-[22px] font-extrabold tracking-wide">
-                    {currentStep.target}m
+                    {fmtDist(currentStep.target, unit)}
                   </p>
                 </div>
                 <div className="rounded-[18px] border border-white/15 bg-white/[0.02] p-4">
@@ -1220,32 +1338,94 @@ export function Coach() {
                 </div>
               </div>
 
-              {/* Input 1 — Distance Result */}
+              {/* Input 1 — Distance Result (manual entry + presets, yards/metres) */}
               <div className="mt-8">
-                <label
-                  htmlFor="distance"
-                  className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/40"
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/40">
+                    Distance
+                  </span>
+                  <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-white/40">
+                    {unit === "yd" ? "Yards" : "Metres"}
+                  </span>
+                </div>
+
+                {/* Stepper + manual numeric entry (opens numeric keyboard) */}
+                <div className={`mt-3 flex items-stretch gap-3 ${isOut ? "opacity-40" : ""}`}>
+                  <button
+                    type="button"
+                    onClick={() => adjustDistance(-5)}
+                    disabled={isOut}
+                    aria-label="Decrease distance"
+                    className="flex size-[58px] shrink-0 items-center justify-center rounded-[14px] border border-white/15 bg-white/[0.02] text-white transition hover:border-gold active:translate-y-px disabled:opacity-40"
+                  >
+                    <Minus className="size-5" strokeWidth={2.5} />
+                  </button>
+                  <div className="relative flex-1">
+                    <input
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={distanceField}
+                      onChange={(e) => {
+                        setIsOut(false);
+                        setDistanceField(e.target.value.replace(/[^0-9]/g, "").slice(0, 3));
+                      }}
+                      onFocus={(e) => e.currentTarget.select()}
+                      disabled={isOut}
+                      aria-label="Distance result"
+                      className="h-full w-full rounded-[14px] border border-white/15 bg-ink-2 px-5 text-center font-display text-[34px] font-extrabold tracking-wide text-white outline-none transition focus:border-gold disabled:cursor-not-allowed"
+                    />
+                    <span className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 font-mono text-[12px] uppercase tracking-[0.16em] text-white/30">
+                      {unit}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => adjustDistance(5)}
+                    disabled={isOut}
+                    aria-label="Increase distance"
+                    className="flex size-[58px] shrink-0 items-center justify-center rounded-[14px] border border-white/15 bg-white/[0.02] text-white transition hover:border-gold active:translate-y-px disabled:opacity-40"
+                  >
+                    <Plus className="size-5" strokeWidth={2.5} />
+                  </button>
+                </div>
+
+                {/* Quick presets (display units) */}
+                <div className="mt-3 grid grid-cols-5 gap-2">
+                  {distancePresets(currentStep.target, unit).map((d) => {
+                    const active = !isOut && fieldValid && fieldNum === d;
+                    return (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => {
+                          setIsOut(false);
+                          setDistanceField(String(d));
+                        }}
+                        className={`rounded-[12px] border py-3 font-display text-[15px] font-bold tracking-wide transition active:translate-y-px ${
+                          active
+                            ? "border-gold bg-gold text-ink"
+                            : "border-white/15 bg-white/[0.02] text-white hover:border-gold"
+                        }`}
+                      >
+                        {d}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Out / Missed toggle */}
+                <button
+                  type="button"
+                  onClick={() => setIsOut((v) => !v)}
+                  className={`mt-3 flex w-full items-center justify-center gap-2 rounded-[12px] border py-3 font-display text-[13px] font-bold uppercase tracking-[0.14em] transition active:translate-y-px ${
+                    isOut
+                      ? "border-gold bg-gold text-ink"
+                      : "border-white/15 bg-white/[0.02] text-white/70 hover:border-gold"
+                  }`}
                 >
-                  Distance Result
-                </label>
-                <select
-                  id="distance"
-                  value={String(distance)}
-                  onChange={(e) =>
-                    setDistance(e.target.value === OUT ? OUT : Number(e.target.value))
-                  }
-                  className="mt-3 w-full rounded-[14px] border border-white/15 bg-ink-2 px-5 py-4 font-display text-[18px] font-bold tracking-wide text-white outline-none transition focus:border-gold"
-                >
-                  {distanceOptions(currentStep.target).map((d) => (
-                    <option key={d} value={d}>
-                      {d}m
-                    </option>
-                  ))}
-                  <option value={OUT}>Out / Missed</option>
-                </select>
-                <p className="mt-2 text-[12px] leading-snug text-white/40">
-                  Pick &ldquo;Out / Missed&rdquo; if the ball flew off-target or you mishit it.
-                </p>
+                  {isOut && <Check className="size-3.5" strokeWidth={3} />}
+                  Out / Missed
+                </button>
               </div>
 
               {/* Input 2 — Direction */}
@@ -1273,18 +1453,161 @@ export function Coach() {
                 </div>
               </div>
 
-              {/* Fixed bottom action bar */}
+              {/* Recent shots — tap any to edit or delete it */}
+              {shots.length > 0 && (
+                <div className="mt-8">
+                  <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/40">
+                    Logged · {shots.length}
+                  </span>
+                  <div className="mt-3 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    {[...shots.keys()].reverse().map((i) => {
+                      const s = shots[i];
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => openEditShot(i)}
+                          className="flex shrink-0 items-center gap-2 rounded-full border border-white/15 bg-white/[0.02] px-3 py-2 transition hover:border-gold active:translate-y-px"
+                        >
+                          <span className="font-display text-[11px] font-bold tracking-wide text-white/45">
+                            {s.club}
+                          </span>
+                          <span className="font-display text-[14px] font-extrabold tracking-wide">
+                            {s.distance === OUT ? "Out" : mToUnit(s.distance, unit)}
+                          </span>
+                          <span
+                            className={`size-1.5 rounded-full ${
+                              s.direction === "Center" ? "bg-gold" : "bg-white/40"
+                            }`}
+                          />
+                          <Pencil className="size-3 text-white/30" strokeWidth={2.5} />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Fixed bottom action bar — Undo + Save */}
               <div className="fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-ink/95 px-6 py-4 backdrop-blur">
-                <div className="mx-auto max-w-[640px]">
+                <div className="mx-auto flex max-w-[640px] items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={undoLastShot}
+                    disabled={!shots.length}
+                    aria-label="Undo last shot"
+                    className="flex size-[56px] shrink-0 items-center justify-center rounded-full border border-white/20 text-white/70 transition hover:border-white hover:text-white active:translate-y-px disabled:opacity-30"
+                  >
+                    <Undo2 className="size-5" strokeWidth={2.5} />
+                  </button>
                   <button
                     onClick={saveShot}
-                    className="flex w-full items-center justify-center gap-2.5 rounded-full bg-gold px-6 py-4 font-display text-[14px] font-bold uppercase tracking-[0.14em] text-ink transition hover:bg-gold-hi active:translate-y-px"
+                    disabled={!canSave}
+                    className="flex flex-1 items-center justify-center gap-2.5 rounded-full bg-gold px-6 py-4 font-display text-[14px] font-bold uppercase tracking-[0.14em] text-ink transition hover:bg-gold-hi active:translate-y-px disabled:opacity-40"
                   >
                     {shotButtonLabel}
                     {!isLastShotOfClub && <ArrowRight className="size-3.5" strokeWidth={2.5} />}
                   </button>
                 </div>
               </div>
+
+              {/* Edit-shot modal — edit or delete any previous shot */}
+              {editIndex !== null && shots[editIndex] && (
+                <div
+                  className="fixed inset-0 z-30 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center sm:p-6"
+                  onClick={() => setEditIndex(null)}
+                >
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-full max-w-[480px] rounded-t-[24px] border border-white/10 bg-ink-2 p-6 sm:rounded-[24px]"
+                  >
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-display text-[18px] font-extrabold uppercase tracking-wide">
+                        Edit Shot ·{" "}
+                        <span className="text-gold">{shots[editIndex].club}</span>
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => setEditIndex(null)}
+                        aria-label="Close"
+                        className="inline-flex size-8 items-center justify-center rounded-full border border-white/15 text-white/60 transition hover:text-white"
+                      >
+                        <X className="size-4" strokeWidth={2.5} />
+                      </button>
+                    </div>
+
+                    <div className={`relative mt-5 ${editIsOut ? "opacity-40" : ""}`}>
+                      <input
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        disabled={editIsOut}
+                        value={editField}
+                        onChange={(e) =>
+                          setEditField(e.target.value.replace(/[^0-9]/g, "").slice(0, 3))
+                        }
+                        onFocus={(e) => e.currentTarget.select()}
+                        aria-label="Distance result"
+                        className="w-full rounded-[14px] border border-white/15 bg-ink px-5 py-4 text-center font-display text-[30px] font-extrabold tracking-wide text-white outline-none transition focus:border-gold disabled:cursor-not-allowed"
+                      />
+                      <span className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 font-mono text-[12px] uppercase tracking-[0.16em] text-white/30">
+                        {unit}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setEditIsOut((v) => !v)}
+                      className={`mt-3 flex w-full items-center justify-center gap-2 rounded-[12px] border py-3 font-display text-[13px] font-bold uppercase tracking-[0.14em] transition ${
+                        editIsOut
+                          ? "border-gold bg-gold text-ink"
+                          : "border-white/15 bg-white/[0.02] text-white/70 hover:border-gold"
+                      }`}
+                    >
+                      {editIsOut && <Check className="size-3.5" strokeWidth={3} />}
+                      Out / Missed
+                    </button>
+
+                    <div className="mt-4 grid grid-cols-3 gap-3">
+                      {DIRECTIONS.map((d) => {
+                        const active = editDirection === d;
+                        return (
+                          <button
+                            key={d}
+                            type="button"
+                            onClick={() => setEditDirection(d)}
+                            className={`rounded-[14px] border px-3 py-3 font-display text-[14px] font-bold uppercase tracking-wide transition ${
+                              active
+                                ? "border-gold bg-gold text-ink"
+                                : "border-white/15 bg-white/[0.02] text-white hover:border-gold"
+                            }`}
+                          >
+                            {d}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="mt-6 flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={deleteEditShot}
+                        aria-label="Delete shot"
+                        className="inline-flex size-[52px] shrink-0 items-center justify-center rounded-full border border-white/20 text-white/60 transition hover:border-red-400 hover:text-red-400 active:translate-y-px"
+                      >
+                        <Trash2 className="size-4" strokeWidth={2.5} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={saveEditShot}
+                        className="flex flex-1 items-center justify-center gap-2 rounded-full bg-gold px-6 py-4 font-display text-[14px] font-bold uppercase tracking-[0.14em] text-ink transition hover:bg-gold-hi active:translate-y-px"
+                      >
+                        <Check className="size-4" strokeWidth={3} />
+                        Save Changes
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </section>
           )}
 
@@ -1423,7 +1746,7 @@ export function Coach() {
                       {newPRs.length > 0 && (
                         <div className="mt-4 rounded-[14px] border border-gold/40 bg-gold/[0.08] px-4 py-3 text-[14px] font-bold text-gold">
                           🏆 New Personal Record —{" "}
-                          {newPRs.map((p) => `${p.club} ${p.distance}m`).join(", ")}
+                          {newPRs.map((p) => `${p.club} ${fmtDist(p.distance, unit)}`).join(", ")}
                         </div>
                       )}
 
@@ -1434,7 +1757,7 @@ export function Coach() {
                               {driverIsNew ? "🏆 " : ""}Longest Driver
                             </span>
                             <span className="font-display text-[18px] font-extrabold text-gold">
-                              {driverBest} m
+                              {fmtDist(driverBest, unit)}
                             </span>
                           </div>
                         )}
@@ -1444,7 +1767,7 @@ export function Coach() {
                               Longest {longestIron.club}
                             </span>
                             <span className="font-display text-[18px] font-extrabold text-gold">
-                              {longestIron.distance} m
+                              {fmtDist(longestIron.distance, unit)}
                             </span>
                           </div>
                         )}
@@ -1619,7 +1942,7 @@ export function Coach() {
                               {club}
                             </span>
                             <span className="text-[12px] text-white/50">
-                              Avg {s.averageDistance}m · Best {s.bestDistance}m
+                              Avg {fmtDist(s.averageDistance, unit)} · Best {fmtDist(s.bestDistance, unit)}
                               {s.outShots > 0 ? ` · ${s.outShots} out` : ""}
                             </span>
                           </div>
