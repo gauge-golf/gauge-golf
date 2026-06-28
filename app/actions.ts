@@ -6,6 +6,8 @@ import { sql } from "@/lib/db";
 import type {
   CoachReportPayload,
   CoachReportState,
+  AdaptivePlanState,
+  AdaptiveClubGuide,
   SaveSessionInput,
   SessionFeeling,
   CoachProgress,
@@ -128,10 +130,7 @@ export async function generateAdaptivePlan(input: {
   goal?: string; // miss type / handicap / etc. (raw option value as string)
   totalBalls: number;
   clubs: string[]; // eligible club keys (e.g. ["sw","pw","i7"])
-}): Promise<
-  | { ok: true; plan: Record<string, number>; focusNote: string }
-  | { ok: false; fallback: true; message: string }
-> {
+}): Promise<AdaptivePlanState> {
   try {
     const userId = await currentUserId();
     if (!userId) {
@@ -182,7 +181,21 @@ You are given:
 Return ONLY valid JSON in this exact shape:
 {
   "plan": { "<clubKey>": <ballsInt>, ... },
-  "focusNote": "One short sentence telling the player what this plan targets and why, referencing their last session."
+  "coaching": {
+    "objective": "One short sentence with today's objective",
+    "focusNote": "One short sentence telling the player what this plan targets and why, referencing recent sessions",
+    "drills": ["Drill 1", "Drill 2", "Drill 3"],
+    "successCriteria": "One short measurable line for what success looks like today",
+    "clubGuides": [
+      {
+        "clubKey": "pw",
+        "balls": 10,
+        "goal": "Land at least 7 shots in the 90-95 yard window",
+        "focus": "Maintain smooth tempo",
+        "avoid": "Decelerating through impact"
+      }
+    ]
+  }
 }
 
 RULES:
@@ -190,7 +203,12 @@ RULES:
 - The integer ball counts MUST sum to EXACTLY the provided total.
 - Allocate MORE balls to clubs/areas tied to the player's biggest limitation and lowest center-hit %, and FEWER to clubs they've already mastered.
 - Keep at least a few balls on strong clubs to maintain feel.
-- focusNote: encouraging, specific, 1 sentence, no raw percentages.`;
+- objective, focusNote, successCriteria: concise and readable in seconds.
+- drills: return 2 or 3 practical drills max.
+- clubGuides: include 1 guide per club in the final plan. balls should match that club's plan count.
+- clubGuides.goal/focus/avoid should be practical, concise, and specific.
+- Never mention clubs outside eligible keys.
+- Keep wording short enough that the full brief is skimmable in under 20 seconds.`;
 
     const goalLine = playerGoal
       ? `Player's PRIMARY goal: ${playerGoal}${
@@ -212,7 +230,13 @@ Build the adaptive plan.`;
     const response = await callOpenAI(systemPrompt, userPrompt);
     const parsed = JSON.parse(response.trim()) as {
       plan?: Record<string, number>;
-      focusNote?: string;
+      coaching?: {
+        objective?: string;
+        focusNote?: string;
+        drills?: string[];
+        successCriteria?: string;
+        clubGuides?: AdaptiveClubGuide[];
+      };
     };
 
     const raw = parsed.plan ?? {};
@@ -248,10 +272,77 @@ Build the adaptive plan.`;
       if (i > input.totalBalls * 4 + 50) break;
     }
 
+    const coaching = parsed.coaching ?? {};
+    const objective =
+      typeof coaching.objective === "string" && coaching.objective.trim()
+        ? coaching.objective.trim()
+        : "Build cleaner contact and tighter control on your key clubs.";
+    const focusNote =
+      typeof coaching.focusNote === "string" && coaching.focusNote.trim()
+        ? coaching.focusNote.trim()
+        : "Tuned to your recent sessions so your weaker clubs get more quality reps.";
+    const successCriteria =
+      typeof coaching.successCriteria === "string" && coaching.successCriteria.trim()
+        ? coaching.successCriteria.trim()
+        : "Complete every club block with committed tempo and centered strike.";
+
+    const drills = Array.isArray(coaching.drills)
+      ? coaching.drills
+          .map((d) => (typeof d === "string" ? d.trim() : ""))
+          .filter(Boolean)
+          .slice(0, 3)
+      : [];
+    const safeDrills = drills.length
+      ? drills
+      : [
+          "Pre-shot: pick a landing window before every ball.",
+          "Tempo ladder: same smooth count on backswing and through-swing.",
+        ];
+
+    const inputGuides = Array.isArray(coaching.clubGuides) ? coaching.clubGuides : [];
+    const byKey = new Map<string, AdaptiveClubGuide>();
+    for (const guide of inputGuides) {
+      if (!guide || !allowed.has(guide.clubKey)) continue;
+      byKey.set(guide.clubKey, {
+        clubKey: guide.clubKey,
+        balls: clean[guide.clubKey] ?? Math.max(1, Math.round(Number(guide.balls) || 0)),
+        goal:
+          typeof guide.goal === "string" && guide.goal.trim()
+            ? guide.goal.trim()
+            : "Deliver consistent strikes to the planned target window.",
+        focus:
+          typeof guide.focus === "string" && guide.focus.trim()
+            ? guide.focus.trim()
+            : "Balanced tempo and centered contact.",
+        avoid:
+          typeof guide.avoid === "string" && guide.avoid.trim()
+            ? guide.avoid.trim()
+            : "Rushing transition from backswing.",
+      });
+    }
+
+    const clubGuides: AdaptiveClubGuide[] = keys.map((clubKey) => {
+      const existing = byKey.get(clubKey);
+      if (existing) return { ...existing, balls: clean[clubKey] };
+      return {
+        clubKey,
+        balls: clean[clubKey],
+        goal: "Deliver consistent strikes to the planned target window.",
+        focus: "Balanced tempo and centered contact.",
+        avoid: "Rushing transition from backswing.",
+      };
+    });
+
     return {
       ok: true,
       plan: clean,
-      focusNote: parsed.focusNote?.trim() || "Tuned to your last session.",
+      coaching: {
+        objective,
+        focusNote,
+        drills: safeDrills,
+        successCriteria,
+        clubGuides,
+      },
     };
   } catch (err) {
     console.error("generateAdaptivePlan() failed:", err);

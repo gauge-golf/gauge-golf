@@ -45,6 +45,7 @@ import type {
   CoachProgress,
   ClubStatRecord,
   SessionHistoryItem,
+  AdaptiveCoachingBrief,
 } from "@/lib/coach";
 import type { AuthUser } from "@/lib/auth";
 import { SaveProgressCard } from "./coach-auth";
@@ -223,7 +224,8 @@ export function Coach() {
 
   // AI adaptive plan (returning signed-in users only)
   const [aiPlan, setAiPlan] = useState<PlanStep[] | null>(null);
-  const [aiFocusNote, setAiFocusNote] = useState<string | null>(null);
+  const [aiCoaching, setAiCoaching] = useState<AdaptiveCoachingBrief | null>(null);
+  const [aiPlanKey, setAiPlanKey] = useState<string | null>(null);
   const [planLoading, setPlanLoading] = useState(false);
 
   // Data reset (clean slate — useful for testing)
@@ -382,8 +384,77 @@ export function Coach() {
   })();
 
   // For returning signed-in users we override with an AI plan (set in
-  // startSession); everyone else uses the hardcoded base plan.
+  // pre-session screen); everyone else uses the hardcoded base plan.
   const plan = aiPlan ?? basePlan;
+  const hasHistory = !!user && (dashboard?.totalSessions ?? 0) >= 1;
+  const basePlanTotalBalls = basePlan.reduce((acc, s) => acc + s.balls, 0);
+  const basePlanClubKeyLine = basePlan.map((s) => s.key).join(",");
+  const planConfigKey =
+    type && option && basePlan.length
+      ? `${type.key}:${String(option.value)}:${basePlan.map((s) => `${s.key}:${s.balls}`).join("|")}`
+      : null;
+
+  // Reset adaptive AI state when the selected training setup changes.
+  useEffect(() => {
+    setAiPlan(null);
+    setAiCoaching(null);
+    setAiPlanKey(null);
+    setPlanLoading(false);
+  }, [planConfigKey]);
+
+  // Build personalized plan + coaching ONCE before training starts.
+  useEffect(() => {
+    if (!started || inSession || !type || !option || !planConfigKey) return;
+
+    if (!hasHistory) {
+      setPlanLoading(false);
+      return;
+    }
+    if (aiPlanKey === planConfigKey || !basePlanClubKeyLine || basePlanTotalBalls <= 0) {
+      return;
+    }
+
+    let active = true;
+    setPlanLoading(true);
+
+    void (async () => {
+      const res = await generateAdaptivePlan({
+        practiceType: type.label,
+        goal:
+          typeof option.value === "string"
+            ? option.value
+            : String(option.value),
+        totalBalls: basePlanTotalBalls,
+        clubs: basePlanClubKeyLine.split(","),
+      });
+      if (!active) return;
+
+      if (res.ok) {
+        setAiPlan(planStepsFromCounts(res.plan));
+        setAiCoaching(res.coaching);
+      } else {
+        setAiPlan(null);
+        setAiCoaching(null);
+      }
+
+      setAiPlanKey(planConfigKey);
+      setPlanLoading(false);
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [
+    started,
+    inSession,
+    type,
+    option,
+    hasHistory,
+    aiPlanKey,
+    planConfigKey,
+    basePlanTotalBalls,
+    basePlanClubKeyLine,
+  ]);
 
   const pos = inSession ? locateShot(plan, shots.length) : null;
   const stepIndex = pos?.stepIndex ?? null;
@@ -439,7 +510,7 @@ export function Coach() {
     : null;
 
   async function startSession() {
-    if (!basePlan.length || !type || !option) return;
+    if (!plan.length || !type || !option || planLoading) return;
 
     // Capture weather in the background (don't block the session on it).
     setWeather(null);
@@ -450,41 +521,9 @@ export function Coach() {
       if (w) setWeather(w);
     })();
 
-    let effective = basePlan;
-
-    // AI adaptive plan: only for verified, returning users (>=1 past session).
-    // Everyone else (first-timers / anonymous) uses the hardcoded base plan.
-    const hasHistory = !!user && (dashboard?.totalSessions ?? 0) >= 1;
-    if (hasHistory) {
-      setPlanLoading(true);
-      const totalBalls = basePlan.reduce((acc, s) => acc + s.balls, 0);
-      const clubs = basePlan.map((s) => s.key);
-      const res = await generateAdaptivePlan({
-        practiceType: type.label,
-        goal:
-          typeof option.value === "string"
-            ? option.value
-            : String(option.value),
-        totalBalls,
-        clubs,
-      });
-      if (res.ok) {
-        effective = planStepsFromCounts(res.plan);
-        setAiPlan(effective);
-        setAiFocusNote(res.focusNote);
-      } else {
-        setAiPlan(null);
-        setAiFocusNote(null);
-      }
-      setPlanLoading(false);
-    } else {
-      setAiPlan(null);
-      setAiFocusNote(null);
-    }
-
     setShots([]);
     setInSession(true);
-    setDistanceField(String(mToUnit(effective[0].target, unit)));
+    setDistanceField(String(mToUnit(plan[0].target, unit)));
     setIsOut(false);
     setDirection(DEFAULT_DIRECTION);
     setStartedAt(Date.now());
@@ -764,7 +803,8 @@ export function Coach() {
     setHistory([]);
     setHistoryOpen(false);
     setAiPlan(null);
-    setAiFocusNote(null);
+    setAiCoaching(null);
+    setAiPlanKey(null);
     setPlanLoading(false);
   }
 
@@ -1248,6 +1288,68 @@ export function Coach() {
                 Your <span className="text-gold">Plan</span>
               </h1>
 
+              {hasHistory && (
+                <div className="mt-5 rounded-[18px] border border-gold/30 bg-gold/[0.06] p-4">
+                  {planLoading ? (
+                    <p className="inline-flex items-center gap-2 text-sm text-gold">
+                      <Loader2 className="size-3.5 animate-spin" strokeWidth={2.5} />
+                      Building your personal coaching brief...
+                    </p>
+                  ) : aiCoaching ? (
+                    <div className="space-y-3">
+                      <div>
+                        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-gold/80">
+                          Today&apos;s Objective
+                        </span>
+                        <p className="mt-1 text-sm text-white/85">{aiCoaching.objective}</p>
+                        <p className="mt-1 text-sm text-white/70">{aiCoaching.focusNote}</p>
+                      </div>
+
+                      {aiCoaching.drills.length > 0 && (
+                        <div>
+                          <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-gold/80">
+                            Drills
+                          </span>
+                          <ul className="mt-1 space-y-1 text-sm text-white/80">
+                            {aiCoaching.drills.slice(0, 3).map((drill) => (
+                              <li key={drill}>• {drill}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      <div>
+                        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-gold/80">
+                          Success
+                        </span>
+                        <p className="mt-1 text-sm text-white/85">{aiCoaching.successCriteria}</p>
+                      </div>
+
+                      <div className="space-y-2">
+                        {plan.map((step) => {
+                          const guide = aiCoaching.clubGuides.find((g) => g.clubKey === step.key);
+                          if (!guide) return null;
+                          return (
+                            <div key={step.key} className="rounded-[14px] border border-white/10 bg-white/[0.02] p-3">
+                              <p className="font-display text-[14px] font-bold uppercase tracking-wide text-gold">
+                                {step.club} — {step.balls} Balls
+                              </p>
+                              <p className="mt-1 text-[13px] text-white/85">Goal: {guide.goal}</p>
+                              <p className="mt-0.5 text-[13px] text-white/70">Focus: {guide.focus}</p>
+                              <p className="mt-0.5 text-[13px] text-white/70">Avoid: {guide.avoid}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-white/70">
+                      Standard plan loaded. Keep logging sessions for sharper personal coaching.
+                    </p>
+                  )}
+                </div>
+              )}
+
               <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {plan.map((s) => (
                   <div
@@ -1297,19 +1399,6 @@ export function Coach() {
           {/* SHOT INPUT — log one shot at a time */}
           {inSession && currentStep && shot && (
             <section className="pb-28">
-              {/* AI coach focus note (returning users only) */}
-              {aiFocusNote && (
-                <div className="mb-6 flex items-start gap-2.5 rounded-[18px] border border-gold/30 bg-gold/[0.06] p-4">
-                  <Crosshair className="mt-0.5 size-4 shrink-0 text-gold" strokeWidth={2.5} />
-                  <div>
-                    <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-gold/80">
-                      Today&apos;s Focus
-                    </span>
-                    <p className="mt-1 text-sm text-white/80">{aiFocusNote}</p>
-                  </div>
-                </div>
-              )}
-
               {/* Club / Target / Shot counter */}
               <div className="grid grid-cols-3 gap-3">
                 <div className="rounded-[18px] border border-white/15 bg-white/[0.02] p-4">

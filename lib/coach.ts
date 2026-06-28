@@ -31,6 +31,29 @@ export type CoachReportState =
   | { ok: true; report: CoachReport }
   | { ok: false; message: string };
 
+/** Concise pre-session coaching line for one club in today's plan. */
+export type AdaptiveClubGuide = {
+  clubKey: string;
+  balls: number;
+  goal: string;
+  focus: string;
+  avoid: string;
+};
+
+/** Pre-training brief shown before "Start Training" for returning users. */
+export type AdaptiveCoachingBrief = {
+  objective: string;
+  drills: string[];
+  successCriteria: string;
+  focusNote: string;
+  clubGuides: AdaptiveClubGuide[];
+};
+
+/** AI adaptive plan response state (or fallback to local plan). */
+export type AdaptivePlanState =
+  | { ok: true; plan: Record<string, number>; coaching: AdaptiveCoachingBrief }
+  | { ok: false; fallback: true; message: string };
+
 /** Self-assessment stored after every completed session. */
 export type SessionFeeling = "weak" | "normal" | "strong" | "very_strong";
 
