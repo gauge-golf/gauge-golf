@@ -19,15 +19,21 @@ const LANGS: LangEntry[] = [
 
 /**
  * Map a pathname under one locale tree to its sibling in the target locale tree.
- * "/"          -> "/ko"          (en -> ko)
- * "/ko"        -> "/"            (ko -> en)
- * "/ko/foo"    -> "/foo"         (ko -> en)
- * "/foo"       -> "/ko/foo"      (en -> ko)
+ * EN lives under "/glove", KO lives under "/ko".
+ * "/glove"      -> "/ko"          (en -> ko)
+ * "/ko"         -> "/glove"       (ko -> en)
+ * "/ko/foo"     -> "/glove/foo"   (ko -> en)
+ * "/glove/foo"  -> "/ko/foo"      (en -> ko)
  */
 function mapPathToLocale(pathname: string, target: Locale): string {
   const isKo = pathname === "/ko" || pathname.startsWith("/ko/");
-  const bare = isKo ? pathname.replace(/^\/ko/, "") || "/" : pathname;
-  if (target === "en") return bare;
+  const isGlove = pathname === "/glove" || pathname.startsWith("/glove/");
+  const bare = isKo
+    ? pathname.replace(/^\/ko/, "") || "/"
+    : isGlove
+      ? pathname.replace(/^\/glove/, "") || "/"
+      : pathname;
+  if (target === "en") return bare === "/" ? "/glove" : `/glove${bare}`;
   return bare === "/" ? "/ko" : `/ko${bare}`;
 }
 

@@ -105,9 +105,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"
         />
-        <link rel="alternate" hrefLang="en" href={SITE_URL} />
+        <link rel="alternate" hrefLang="en" href={`${SITE_URL}/glove`} />
         <link rel="alternate" hrefLang="ko" href={`${SITE_URL}/ko`} />
-        <link rel="alternate" hrefLang="x-default" href={SITE_URL} />
+        <link rel="alternate" hrefLang="x-default" href={`${SITE_URL}/glove`} />
       </head>
       <body>
         <script

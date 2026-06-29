@@ -15,6 +15,8 @@ import type {
   SessionHistoryItem,
   ClubProfileRecord,
   ClubStatRecord,
+  ClubTrend,
+  ClubTrendPoint,
 } from "@/lib/coach";
 import type { AuthUser, PlayerGoal } from "@/lib/auth";
 import {
@@ -630,6 +632,63 @@ export async function getClubProfiles(
     }));
   } catch (err) {
     console.error("getClubProfiles() failed:", err);
+    return [];
+  }
+}
+
+/**
+ * Build each club's historical trend — the chronological per-session data points
+ * (avg/best distance, accuracy, dispersion) that, over many sessions, become the
+ * digital Yardage Book.
+ *
+ * This is derived from the per-session club stats already persisted on every
+ * saved session, so it stays accurate and updates itself with no extra storage
+ * and no manual input from the player. Foundation only — not exposed in the UI yet.
+ * Signed-in players are scoped by userId; anonymous players by their clientId.
+ */
+export async function getClubTrends(
+  userId: string | null,
+  clientId: string
+): Promise<ClubTrend[]> {
+  try {
+    const rows = userId
+      ? await sql`
+          select club_stats, created_at
+          from coach_sessions
+          where user_id = ${userId}
+          order by created_at asc
+        `
+      : await sql`
+          select club_stats, created_at
+          from coach_sessions
+          where client_id = ${clientId} and user_id is null
+          order by created_at asc
+        `;
+
+    // Group each session's per-club stats into chronological per-club series.
+    const byClub = new Map<string, ClubTrendPoint[]>();
+    for (const r of rows) {
+      const date = new Date(r.created_at as string).toISOString();
+      const cs = (r.club_stats ?? {}) as Record<string, ClubStatRecord>;
+      for (const [clubKey, s] of Object.entries(cs)) {
+        const shots = Number(s?.shots) || 0;
+        if (shots <= 0) continue;
+        const arr = byClub.get(clubKey) ?? [];
+        arr.push({
+          date,
+          avgDistance: Math.round(Number(s.avg ?? s.best) || 0),
+          bestDistance: Math.round(Number(s.best) || 0),
+          accuracy: Math.round(Number(s.center) || 0),
+          dispersion: Math.round(Number(s.stdDev) || 0),
+          shots,
+        });
+        byClub.set(clubKey, arr);
+      }
+    }
+
+    return [...byClub.entries()].map(([clubKey, points]) => ({ clubKey, points }));
+  } catch (err) {
+    console.error("getClubTrends() failed:", err);
     return [];
   }
 }

@@ -75,6 +75,26 @@ export type ClubProfileRecord = {
   lastUpdated: string;  // ISO timestamp
 };
 
+/**
+ * One historical data point for a single club, captured from one session.
+ * The chronological series of these is the time-series foundation for the
+ * future digital Yardage Book (distance/accuracy/dispersion trends over time).
+ */
+export type ClubTrendPoint = {
+  date: string;         // ISO timestamp of the session
+  avgDistance: number;  // m
+  bestDistance: number; // m
+  accuracy: number;     // %, center-hit rate that session
+  dispersion: number;   // m, within-session shot std deviation
+  shots: number;
+};
+
+/** A club's full historical trend (oldest -> newest), powering future trends. */
+export type ClubTrend = {
+  clubKey: string;          // club abbreviation, e.g. "7I", "DR"
+  points: ClubTrendPoint[]; // chronological, oldest first
+};
+
 export type SaveSessionInput = {
   clientId: string; // anonymous per-device id
   practiceType: string;
