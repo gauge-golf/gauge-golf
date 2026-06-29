@@ -16,15 +16,20 @@ const BENEFITS = [
 ];
 
 /**
- * Post-value registration card (email + OTP, no password).
- * Shown only after the coaching report is delivered.
+ * Passwordless auth card (email + OTP, no password). Two contexts:
+ * - "save"  — post-value registration shown after the coaching report.
+ * - "signin" — on-demand sign-in opened from the first screen.
  */
 export function SaveProgressCard({
   clientId,
   onSignedIn,
+  variant = "save",
+  onDone,
 }: {
   clientId: string;
   onSignedIn: (user: AuthUser, isNew: boolean) => void;
+  variant?: "save" | "signin";
+  onDone?: () => void;
 }) {
   const [step, setStep] = useState<Step>("intro");
   const [email, setEmail] = useState("");
@@ -88,9 +93,20 @@ export function SaveProgressCard({
         </h3>
         <p className="mt-2 text-[14px] text-white/70">
           Signed in as{" "}
-          <span className="font-display font-bold text-gold">{result.user.id}</span>. Your
-          progress is saved — we&apos;ll remember you next time.
+          <span className="font-display font-bold text-gold">{result.user.id}</span>.{" "}
+          {result.isNew
+            ? "Your progress is saved — we'll remember you next time."
+            : "Your sessions, records and coaching history are all here."}
         </p>
+        {onDone && (
+          <button
+            onClick={onDone}
+            className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gold px-6 py-3.5 font-display text-[14px] font-bold uppercase tracking-[0.14em] text-ink transition hover:bg-gold-hi active:translate-y-px"
+          >
+            Continue
+            <ArrowRight className="size-3.5" strokeWidth={2.5} />
+          </button>
+        )}
       </div>
     );
   }
@@ -98,11 +114,17 @@ export function SaveProgressCard({
   return (
     <div className="rounded-[18px] border border-white/15 bg-white/[0.02] p-6">
       <h3 className="font-display text-[18px] font-extrabold tracking-tight">
-        Save your progress?
+        {variant === "signin" ? "Welcome back" : "Save your progress?"}
       </h3>
 
       {step === "intro" && (
         <>
+          {variant === "signin" && (
+            <p className="mt-2 text-[14px] text-white/60">
+              Sign in to instantly restore your sessions, records and AI coaching
+              history — and pick up right where you left off.
+            </p>
+          )}
           <ul className="mt-4 space-y-2">
             {BENEFITS.map((b) => (
               <li key={b} className="flex items-center gap-2.5 text-[14px] text-white/80">

@@ -27,6 +27,7 @@ import {
   Plus,
   X,
   LayoutGrid,
+  LogIn,
 } from "lucide-react";
 import {
   analyzeSession,
@@ -226,6 +227,8 @@ export function Coach() {
   // Auth (passwordless) + returning-user dashboard
   const [user, setUser] = useState<AuthUser | null>(null);
   const [dashboard, setDashboard] = useState<CoachProgress | null>(null);
+  // On-demand sign-in (opened from the first screen, before any session).
+  const [showAuth, setShowAuth] = useState(false);
 
   // AI adaptive plan (returning signed-in users only)
   const [aiPlan, setAiPlan] = useState<PlanStep[] | null>(null);
@@ -266,14 +269,16 @@ export function Coach() {
     if (typeof window !== "undefined") localStorage.setItem("gg_unit", next);
   }
 
-  // Auto sign-in via secure cookie, then load the returning-user dashboard.
+  // Auto sign-in via secure cookie, then restore the returning-user dashboard.
+  // Anonymous returning players (same device) get their prior progress restored
+  // too — never make a returning user feel like they've lost their history.
   useEffect(() => {
     let active = true;
     (async () => {
       const u = await getCurrentUser();
-      if (!active || !u) return;
-      setUser(u);
-      const prog = await getCoachProgress(getClientId(), undefined, u.id);
+      if (!active) return;
+      if (u) setUser(u);
+      const prog = await getCoachProgress(getClientId(), undefined, u?.id);
       if (active) setDashboard(prog);
     })();
     return () => {
@@ -931,21 +936,32 @@ export function Coach() {
             )}
           </div>
           <div className="flex items-center gap-3">
-            {((type && !result) || started) && (
+            {((type && !result) || started || showAuth) && (
               <button
                 onClick={() =>
-                  inSession
-                    ? setInSession(false)
-                    : started
-                      ? setStarted(false)
-                      : option
-                        ? setOption(null)
-                        : setType(null)
+                  showAuth
+                    ? setShowAuth(false)
+                    : inSession
+                      ? setInSession(false)
+                      : started
+                        ? setStarted(false)
+                        : option
+                          ? setOption(null)
+                          : setType(null)
                 }
                 className="inline-flex items-center gap-2 font-display text-[12px] font-bold uppercase tracking-[0.14em] text-white/60 transition hover:text-white"
               >
                 <ArrowLeft className="size-3.5" strokeWidth={2.5} />
                 Back
+              </button>
+            )}
+            {!user && !showAuth && !showClubs && !type && !started && (
+              <button
+                onClick={() => setShowAuth(true)}
+                className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold/[0.06] px-3.5 py-1.5 font-display text-[11px] font-bold uppercase tracking-[0.14em] text-gold transition hover:bg-gold/[0.12] active:translate-y-px"
+              >
+                <LogIn className="size-3.5" strokeWidth={2.5} />
+                Sign In
               </button>
             )}
             {user && (
@@ -1033,17 +1049,39 @@ export function Coach() {
             />
           )}
 
+          {/* SIGN IN — on-demand, opened from the first screen */}
+          {showAuth && (
+            <section className="mx-auto w-full max-w-[440px]">
+              <SaveProgressCard
+                variant="signin"
+                clientId={getClientId()}
+                onSignedIn={handleSignedIn}
+                onDone={() => setShowAuth(false)}
+              />
+            </section>
+          )}
+
           {/* STEP 1 — Practice type */}
-          {!type && !showClubs && (
+          {!type && !showClubs && !showAuth && (
             <section>
-              {/* Returning-user dashboard */}
-              {user && dashboard && dashboard.totalSessions > 0 && (
+              {/* Returning-user dashboard (signed-in or anonymous on this device) */}
+              {dashboard && dashboard.totalSessions > 0 && (
                 <div className="mb-8 rounded-[18px] border border-gold/30 bg-gold/[0.04] p-6">
                   <div className="flex items-center justify-between">
                     <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/50">
                       Welcome back
                     </span>
-                    <span className="font-display text-[13px] font-bold text-gold">{user.displayName ?? user.id}</span>
+                    {user ? (
+                      <span className="font-display text-[13px] font-bold text-gold">{user.displayName ?? user.id}</span>
+                    ) : (
+                      <button
+                        onClick={() => setShowAuth(true)}
+                        className="inline-flex items-center gap-1.5 font-display text-[12px] font-bold uppercase tracking-[0.12em] text-gold transition hover:text-gold-hi"
+                      >
+                        <LogIn className="size-3.5" strokeWidth={2.5} />
+                        Sign in to save
+                      </button>
+                    )}
                   </div>
                   <div className="mt-4 grid grid-cols-3 gap-3">
                     <div className="rounded-[12px] bg-white/[0.04] px-3 py-3 text-center">
