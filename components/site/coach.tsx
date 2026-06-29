@@ -28,6 +28,8 @@ import {
   X,
   LayoutGrid,
   LogIn,
+  Thermometer,
+  Wind,
 } from "lucide-react";
 import {
   analyzeSession,
@@ -928,12 +930,6 @@ export function Coach() {
                         ? "Step 2 / 2"
                         : "Ready"}
             </span>
-            {sessionRunning && (
-              <span className="flex items-center gap-1.5 border-l border-white/15 pl-3 tabular-nums text-gold">
-                <Clock className="size-3" strokeWidth={2.5} />
-                {formatDuration(liveSecs)}
-              </span>
-            )}
           </div>
           <div className="flex items-center gap-3">
             {((type && !result) || started || showAuth) && (
@@ -1534,6 +1530,53 @@ export function Coach() {
           {/* SHOT INPUT — log one shot at a time */}
           {inSession && currentStep && shot && (
             <section className="pb-28">
+              {/* Live practice context — conditions affecting today's ball flight.
+                  Auto-captured (weather + timers), no manual input. */}
+              <div className="mb-6 grid grid-cols-4 divide-x divide-white/10 overflow-hidden rounded-[14px] border border-white/15 bg-white/[0.02]">
+                {[
+                  {
+                    key: "temp",
+                    icon: Thermometer,
+                    value: weather ? `${weather.tempC}°` : "—",
+                    label: "Temp",
+                  },
+                  {
+                    key: "wind",
+                    icon: Wind,
+                    value: weather ? String(weather.windKmh) : "—",
+                    label: weather ? `km/h ${weather.windDir}` : "Wind",
+                  },
+                  {
+                    key: "time",
+                    icon: Clock,
+                    value: formatDuration(liveSecs),
+                    label: "Time",
+                  },
+                  {
+                    key: "balls",
+                    icon: Target,
+                    value: String(shots.length),
+                    label: "Balls",
+                  },
+                ].map((c) => {
+                  const Icon = c.icon;
+                  return (
+                    <div
+                      key={c.key}
+                      className="flex flex-col items-center gap-1 px-2 py-3 text-center"
+                    >
+                      <Icon className="size-3.5 text-gold" strokeWidth={2.5} />
+                      <span className="font-display text-[16px] font-extrabold leading-none tabular-nums">
+                        {c.value}
+                      </span>
+                      <span className="text-[9px] uppercase tracking-[0.12em] text-white/45">
+                        {c.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
               {/* Club / Target / Shot counter */}
               <div className="grid grid-cols-3 gap-3">
                 <div className="rounded-[18px] border border-white/15 bg-white/[0.02] p-4">
