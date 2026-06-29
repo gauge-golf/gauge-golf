@@ -26,6 +26,7 @@ import {
   Minus,
   Plus,
   X,
+  LayoutGrid,
 } from "lucide-react";
 import {
   analyzeSession,
@@ -38,17 +39,20 @@ import {
   resetMyData,
   setDisplayName,
   getSessionHistory,
+  getClubProfiles,
 } from "@/app/actions";
 import type {
   CoachReport,
   SessionFeeling,
   CoachProgress,
   ClubStatRecord,
+  ClubProfileRecord,
   SessionHistoryItem,
   AdaptiveCoachingBrief,
 } from "@/lib/coach";
 import type { AuthUser } from "@/lib/auth";
 import { SaveProgressCard } from "./coach-auth";
+import { MyClubs } from "./my-clubs";
 import {
   BAG_CLUBS,
   OUT,
@@ -245,6 +249,11 @@ export function Coach() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [history, setHistory] = useState<SessionHistoryItem[]>([]);
 
+  // My Clubs — personal yardage reference (lazy-loaded on open)
+  const [showClubs, setShowClubs] = useState(false);
+  const [clubProfiles, setClubProfiles] = useState<ClubProfileRecord[]>([]);
+  const [clubsLoading, setClubsLoading] = useState(false);
+
   // Persisted display unit.
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -312,6 +321,14 @@ export function Coach() {
       setHistory(rows);
       setHistoryLoading(false);
     }
+  }
+
+  async function openClubs() {
+    setShowClubs(true);
+    setClubsLoading(true);
+    const rows = await getClubProfiles(user?.id ?? null, getClientId());
+    setClubProfiles(rows);
+    setClubsLoading(false);
   }
 
   function startEditName() {
@@ -663,94 +680,152 @@ export function Coach() {
     setShareError(null);
     try {
       const stats = computeStats(shots);
-      const driverBest = stats["DR"]?.bestDistance ?? 0;
       const mostConsistent = mostConsistentClub(stats);
+
+      // Overall accuracy — center strikes across every shot logged.
+      const totalShots = shots.length;
+      const centerHits = shots.filter(
+        (s) => s.direction === "Center" && s.distance !== OUT
+      ).length;
+      const accuracy = totalShots ? Math.round((centerHits / totalShots) * 100) : 0;
+
+      // A new personal record this session becomes the hero element.
+      const clubName = (abbr: string) =>
+        BAG_CLUBS.find((c) => c.club === abbr)?.label ?? abbr;
+      const heroPR =
+        Object.entries(stats)
+          .filter(
+            ([club, s]) =>
+              s.bestDistance > 0 &&
+              recordsPrior[club] != null &&
+              s.bestDistance > recordsPrior[club]
+          )
+          .map(([club, s]) => ({ club, distance: s.bestDistance }))
+          .sort((a, b) => b.distance - a.distance)[0] ?? null;
+      const score = report?.practiceScore ?? 0;
+
+      // Instagram Stories / X portrait canvas (9:16).
       const W = 1080;
-      const H = 1350;
+      const H = 1920;
       const canvas = document.createElement("canvas");
       canvas.width = W;
       canvas.height = H;
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("no canvas context");
 
-      // Background
-      ctx.fillStyle = "#0b0b0c";
-      ctx.fillRect(0, 0, W, H);
-      // Gold ambient glow
-      const glow = ctx.createRadialGradient(W * 0.8, H * 0.15, 0, W * 0.8, H * 0.15, W * 0.8);
-      glow.addColorStop(0, "rgba(241,192,78,0.16)");
-      glow.addColorStop(1, "rgba(241,192,78,0)");
-      ctx.fillStyle = glow;
-      ctx.fillRect(0, 0, W, H);
-      // Border
-      ctx.strokeStyle = "rgba(255,255,255,0.12)";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(48, 48, W - 96, H - 96);
-
       const gold = "#f1c04e";
       const white = "#ffffff";
       const muted = "rgba(255,255,255,0.55)";
+      const faint = "rgba(255,255,255,0.06)";
 
-      // Brand
-      ctx.textAlign = "left";
+      // Shrink a font until the text fits within maxWidth.
+      const fitFont = (text: string, maxWidth: number, weight: number, startPx: number) => {
+        let px = startPx;
+        ctx.font = `${weight} ${px}px Arial, sans-serif`;
+        while (ctx.measureText(text).width > maxWidth && px > 24) {
+          px -= 6;
+          ctx.font = `${weight} ${px}px Arial, sans-serif`;
+        }
+      };
+
+      // Background + centered ambient gold glow + thin frame.
+      ctx.fillStyle = "#0b0b0c";
+      ctx.fillRect(0, 0, W, H);
+      const glow = ctx.createRadialGradient(W * 0.5, H * 0.34, 0, W * 0.5, H * 0.34, W * 0.95);
+      glow.addColorStop(0, "rgba(241,192,78,0.18)");
+      glow.addColorStop(1, "rgba(241,192,78,0)");
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = "rgba(255,255,255,0.12)";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(40, 40, W - 80, H - 80);
+
+      ctx.textAlign = "center";
+
+      // Brand + date.
       ctx.fillStyle = gold;
-      ctx.font = "800 40px Arial, sans-serif";
-      ctx.fillText("GAUGE GOLF", 96, 150);
+      ctx.font = "800 46px Arial, sans-serif";
+      ctx.fillText("GAUGE GOLF", W / 2, 180);
       ctx.fillStyle = muted;
-      ctx.font = "600 24px Arial, sans-serif";
+      ctx.font = "600 28px Arial, sans-serif";
       ctx.fillText(
         new Date().toLocaleDateString(undefined, {
-          weekday: "long",
           year: "numeric",
           month: "long",
           day: "numeric",
         }),
-        96,
-        190
+        W / 2,
+        232
       );
 
-      // Golfer name (top-right)
-      ctx.textAlign = "right";
-      ctx.fillStyle = white;
-      ctx.font = "700 28px Arial, sans-serif";
-      ctx.fillText(user?.displayName ?? user?.id ?? "Guest", W - 96, 150);
-      ctx.textAlign = "left";
-
-      // Headline
-      ctx.fillStyle = white;
-      ctx.font = "800 96px Arial, sans-serif";
-      ctx.fillText(`${shots.length}`, 96, 360);
-      ctx.fillStyle = muted;
-      ctx.font = "700 32px Arial, sans-serif";
-      ctx.fillText("BALLS HIT THIS SESSION", 96, 410);
-
-      // Stat rows
-      const rows: [string, string][] = [
-        ["Session Time", formatDuration(durationSecs)],
-        ["Longest Driver", driverBest ? fmtDist(driverBest, unit) : "—"],
-        ["Most Consistent", mostConsistent ? mostConsistent.club : "—"],
-        ["Current Streak", `${progress?.streakWeeks ?? 0} wk`],
-        ["Total Balls Hit", `${(progress?.totalBalls ?? shots.length).toLocaleString()}`],
-      ];
-      let y = 500;
-      for (const [label, value] of rows) {
-        ctx.fillStyle = "rgba(255,255,255,0.06)";
-        ctx.fillRect(96, y, W - 192, 108);
-        ctx.fillStyle = muted;
-        ctx.font = "600 28px Arial, sans-serif";
-        ctx.fillText(label.toUpperCase(), 128, y + 46);
+      // ── HERO ───────────────────────────────────────────────
+      if (heroPR) {
         ctx.fillStyle = gold;
-        ctx.textAlign = "right";
-        ctx.font = "800 52px Arial, sans-serif";
-        ctx.fillText(value, W - 128, y + 72);
-        ctx.textAlign = "left";
-        y += 132;
+        ctx.font = "800 54px Arial, sans-serif";
+        ctx.fillText("\u{1F3C6}  NEW PERSONAL BEST", W / 2, 740);
+
+        ctx.fillStyle = white;
+        fitFont(clubName(heroPR.club).toUpperCase(), W - 200, 800, 130);
+        ctx.fillText(clubName(heroPR.club).toUpperCase(), W / 2, 920);
+
+        ctx.fillStyle = gold;
+        ctx.font = "900 300px Arial, sans-serif";
+        ctx.fillText(`${mToUnit(heroPR.distance, unit)}`, W / 2, 1240);
+        ctx.fillStyle = muted;
+        ctx.font = "700 84px Arial, sans-serif";
+        ctx.fillText(unit, W / 2, 1340);
+      } else {
+        ctx.fillStyle = gold;
+        ctx.font = "800 54px Arial, sans-serif";
+        ctx.fillText("SESSION SCORE", W / 2, 800);
+
+        ctx.fillStyle = white;
+        ctx.font = "900 380px Arial, sans-serif";
+        ctx.fillText(`${score}`, W / 2, 1200);
+        ctx.fillStyle = muted;
+        ctx.font = "700 72px Arial, sans-serif";
+        ctx.fillText("OUT OF 100", W / 2, 1300);
       }
 
-      // Footer
+      // ── STAT STRIP (3 tiles, high-value only) ──────────────
+      const tiles: [string, string][] = heroPR
+        ? [
+            ["Score", `${score}`],
+            ["Accuracy", `${accuracy}%`],
+            ["Balls", `${totalShots}`],
+          ]
+        : [
+            ["Best Club", mostConsistent?.club ?? "—"],
+            ["Accuracy", `${accuracy}%`],
+            ["Balls", `${totalShots}`],
+          ];
+      const M = 80;
+      const gap = 28;
+      const tileW = Math.floor((W - 2 * M - 2 * gap) / 3);
+      const tileH = 280;
+      const tileY = 1490;
+      tiles.forEach(([label, value], i) => {
+        const x = M + i * (tileW + gap);
+        ctx.fillStyle = faint;
+        ctx.beginPath();
+        ctx.roundRect(x, tileY, tileW, tileH, 28);
+        ctx.fill();
+        ctx.fillStyle = gold;
+        fitFont(value, tileW - 48, 900, 92);
+        ctx.fillText(value, x + tileW / 2, tileY + 150);
+        ctx.fillStyle = muted;
+        ctx.font = "700 30px Arial, sans-serif";
+        ctx.fillText(label.toUpperCase(), x + tileW / 2, tileY + 214);
+      });
+
+      // Footer — player + site.
       ctx.fillStyle = muted;
-      ctx.font = "600 26px Arial, sans-serif";
-      ctx.fillText("Train with intent. gaugegolf.com", 96, H - 96);
+      ctx.font = "600 30px Arial, sans-serif";
+      ctx.fillText(
+        `${user?.displayName ?? user?.id ?? "Guest"}   \u00B7   gaugegolf.com`,
+        W / 2,
+        H - 130
+      );
 
       const blob = await new Promise<Blob | null>((res) =>
         canvas.toBlob(res, "image/png")
@@ -761,11 +836,14 @@ export function Coach() {
       const nav = navigator as Navigator & {
         canShare?: (data: { files: File[] }) => boolean;
       };
+      const caption = heroPR
+        ? `New personal best — ${clubName(heroPR.club)} ${fmtDist(heroPR.distance, unit)} 🏆 @ Gauge Golf`
+        : `Range session — scored ${score}/100 🏌️ @ Gauge Golf`;
       if (nav.canShare && nav.canShare({ files: [file] })) {
         await navigator.share({
           files: [file],
           title: "Gauge Golf",
-          text: "My range session 🏌️",
+          text: caption,
         });
       } else {
         const url = URL.createObjectURL(blob);
@@ -831,17 +909,19 @@ export function Coach() {
           <div className="inline-flex items-center gap-3 rounded-full border border-white/20 px-3 py-2 font-mono text-[11px] uppercase tracking-[0.16em] text-white/60">
             <span className="size-1.5 animate-pulse-gold rounded-full bg-gold" />
             <span>
-              {inSession
-                ? sessionComplete
-                  ? "Complete"
-                  : currentStep?.label
-                : started
-                  ? "Your Plan"
-                  : !type
-                    ? "Step 1 / 2"
-                    : !option
-                      ? "Step 2 / 2"
-                      : "Ready"}
+              {showClubs
+                ? "My Clubs"
+                : inSession
+                  ? sessionComplete
+                    ? "Complete"
+                    : currentStep?.label
+                  : started
+                    ? "Your Plan"
+                    : !type
+                      ? "Step 1 / 2"
+                      : !option
+                        ? "Step 2 / 2"
+                        : "Ready"}
             </span>
             {sessionRunning && (
               <span className="flex items-center gap-1.5 border-l border-white/15 pl-3 tabular-nums text-gold">
@@ -937,13 +1017,24 @@ export function Coach() {
 
         <div
           className={`flex flex-1 flex-col py-10 ${
-            started || inSession || (result && type?.key === "driving-range")
+            showClubs || started || inSession || (result && type?.key === "driving-range")
               ? "justify-start"
               : "justify-center"
           }`}
         >
+          {/* MY CLUBS — personal yardage reference */}
+          {showClubs && (
+            <MyClubs
+              profiles={clubProfiles}
+              unit={unit}
+              loading={clubsLoading}
+              onBack={() => setShowClubs(false)}
+              onStartPractice={() => setShowClubs(false)}
+            />
+          )}
+
           {/* STEP 1 — Practice type */}
-          {!type && (
+          {!type && !showClubs && (
             <section>
               {/* Returning-user dashboard */}
               {user && dashboard && dashboard.totalSessions > 0 && (
@@ -1135,6 +1226,27 @@ export function Coach() {
                   );
                 })}
               </div>
+
+              {/* My Clubs — personal yardage reference (available to everyone) */}
+              <button
+                onClick={openClubs}
+                className="group mt-4 flex w-full items-center justify-between rounded-[18px] border border-white/15 bg-white/[0.02] px-5 py-4 text-left transition hover:border-gold hover:bg-white/[0.04] active:translate-y-px"
+              >
+                <span className="flex items-center gap-3">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-[12px] border border-white/15 bg-ink-3 text-gold transition group-hover:border-gold/50">
+                    <LayoutGrid className="size-5" strokeWidth={2} />
+                  </span>
+                  <span className="flex flex-col">
+                    <span className="font-display text-[15px] font-bold uppercase tracking-wide">
+                      My Clubs
+                    </span>
+                    <span className="text-[12px] leading-snug text-white/50">
+                      Your yardages for every club.
+                    </span>
+                  </span>
+                </span>
+                <ArrowRight className="size-4 text-white/40 transition group-hover:text-gold" strokeWidth={2.5} />
+              </button>
 
               {/* Units — yards by default, metres optional. Saved on device. */}
               <div className="mt-8 flex items-center gap-3">

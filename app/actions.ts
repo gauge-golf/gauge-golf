@@ -594,18 +594,30 @@ async function upsertClubProfiles(
   }
 }
 
-/** Fetch the player's aggregated per-club yardage profiles (Yardage Book data). */
+/**
+ * Fetch the player's aggregated per-club yardage profiles (Yardage Book data).
+ * Signed-in players are scoped by userId; anonymous players by their clientId.
+ */
 export async function getClubProfiles(
-  userId: string
+  userId: string | null,
+  clientId: string
 ): Promise<ClubProfileRecord[]> {
   try {
-    const rows = await sql`
-      select club_key, avg_distance, reliable_dist, personal_best,
-             accuracy, dispersion, session_count, last_updated_at
-      from club_profiles
-      where user_id = ${userId}
-      order by last_updated_at desc
-    `;
+    const rows = userId
+      ? await sql`
+          select club_key, avg_distance, reliable_dist, personal_best,
+                 accuracy, dispersion, session_count, last_updated_at
+          from club_profiles
+          where user_id = ${userId}
+          order by last_updated_at desc
+        `
+      : await sql`
+          select club_key, avg_distance, reliable_dist, personal_best,
+                 accuracy, dispersion, session_count, last_updated_at
+          from club_profiles
+          where client_id = ${clientId} and user_id is null
+          order by last_updated_at desc
+        `;
     return rows.map((r) => ({
       clubKey: r.club_key as string,
       avgDistance: Number(r.avg_distance) || 0,
